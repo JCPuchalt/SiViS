@@ -1,6 +1,6 @@
 # SiViS
-New methods for C. elegans assays lifespan automation, these are for improving C. elegans deteccion, and it is described in research article [1].
-This method uses methods for vision system inspection [2] and for c-elegans detection [3] and evaluate them.
+New methods for C. elegans assays lifespan automation have been evaluated, these are for improving C. elegans deteccion, and these are described in research article [1].
+In addition, other methods are used for vision system inspection [2] and for c-elegans detection [3], all of these are evaluated.
 
 ### Research article [1]
 [1] "A small and flexible machine for monitoring Caenorhabditis elegans based on active vision and image processing techniques: Lifespan validation" REVIEW XXXXxxxxx
@@ -13,7 +13,7 @@ Copyright (c) 2020 UPV. J.Puchalt, A.Sánchez, E.Ivorra, R.Martínez, S.Genovés
 [3] "Improving lifespan automation for Caenorhabditis elegans by using image processing and a post-processing adaptive data filter" Scientific Reports
 Copyright (c) 2020 UPV and Biopolis. J.Puchalt, A.Sánchez, E.Ivorra, R.Martínez, S.Genovés and P.Martorell
 
-#### Example code on [2]
+#### Example assemby and code on [2]
 * It is described in document https://github.com/JCPuchalt/c-elegans_smartLight
 
 #### Example code on [3]
@@ -21,9 +21,15 @@ Copyright (c) 2020 UPV and Biopolis. J.Puchalt, A.Sánchez, E.Ivorra, R.Martíne
 
 #### Hardware description on [1]
 In this repository are the .stl files to print in 3D printer. 
-* xxxxxxxx.stl (print with elastic material)
-* xxxxxxxx.stl (print with PLA)
-* xxxxxxxxx.stl (print with PLA)
+* bridge.stl
+* door.stl
+* filter.stl
+* lid.stl
+* pre_rack.stl
+* rack.stl
+* electronicBox.stl
+* displayBox.stl
+* frame.stl
 
 Then assemby vibration system and adjust to vision system as follow 
-xxxxxxxxxxxxxx
+https://github.com/JCPuchalt/SiViS/blob/master/AssemblyManual.pdf
