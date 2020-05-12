@@ -33,3 +33,9 @@ In this repository are the .stl files to print in 3D printer.
 
 Then assemby vibration system and adjust to vision system as follow 
 https://github.com/JCPuchalt/SiViS/blob/master/AssemblyManual.pdf
+
+#### Pallet assembly
+These are the parts:
+* pallet_rigidPart.stl
+* pallet_middlePart.stl
+* pallet_flexiblePart.stl
