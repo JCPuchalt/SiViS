@@ -39,3 +39,5 @@ These are the parts:
 * pallet_rigidPart.stl
 * pallet_middlePart.stl
 * pallet_flexiblePart.stl
+
+Assembly the pallet part as follow https://github.com/JCPuchalt/SiViS/blob/master/AssemblyPallet.pdf
