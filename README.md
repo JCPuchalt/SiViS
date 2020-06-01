@@ -10,8 +10,7 @@ Copyright (c) 2020 UPV. J.Puchalt, A.Sánchez, E.Ivorra, R.Martínez, S.Genovés
 [2] Puchalt JC, Sánchez-Salmerón AJ, Martorell Guerola P, Genovés Martínez S (2019) Active backlight for automating visual monitoring: An analysis of a lighting control technique for Caenorhabditis elegans cultured on standard Petri plates. PLOS ONE 14(4): e0215548. https://doi.org/10.1371/journal.pone.0215548
 
 ### Research article [3]
-[3] "Improving lifespan automation for Caenorhabditis elegans by using image processing and a post-processing adaptive data filter" Scientific Reports
-Copyright (c) 2020 UPV and Biopolis. J.Puchalt, A.Sánchez, E.Ivorra, R.Martínez, S.Genovés and P.Martorell
+[3] Puchalt, J.C., Sánchez-Salmerón, A., Ivorra, E. et al. Improving lifespan automation for Caenorhabditis elegans by using image processing and a post-processing adaptive data filter. Sci Rep 10, 8729 (2020). https://doi.org/10.1038/s41598-020-65619-4
 
 #### Example assemby and code on [2]
 * It is described in document https://github.com/JCPuchalt/c-elegans_smartLight
