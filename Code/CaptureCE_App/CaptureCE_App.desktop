@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Name=CaptureCE
+Comment=Sequence Capture
+Exec=CapturaCE
+Icon=icon.png
+Categories=Media;
+X-AppImage-Version="2.0"
+Name[es_ES]=CaptureCE_App

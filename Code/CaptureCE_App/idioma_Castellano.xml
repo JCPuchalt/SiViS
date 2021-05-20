@@ -1,0 +1,88 @@
+<?xml version="1.0"?>
+<opencv_storage>
+<sobreescribir_windowTitle>"Sobreescribir"</sobreescribir_windowTitle>
+<seleccione_una_tarea>"Seleccione una tarea"</seleccione_una_tarea>
+<desea_sobrescribir>"¿Desea sobreescribir condicion: %1, probetas: %2 y %3?"</desea_sobrescribir>
+<aceptar>"Aceptar"</aceptar>
+<cancelar>"Cancelar"</cancelar>
+<grabando>"Grabando..."</grabando>
+<parado>"Parado"</parado>
+<fin_tarea>"¡Fin de la tarea!"</fin_tarea>
+<reescribir>"Reescribir..."</reescribir>
+<siguiente>"Siguiente..."</siguiente>
+<dia_cond_prob>"Día: %1, Cond: %2, Prob: %3"</dia_cond_prob>
+<cancelacion>"Censura"</cancelacion>
+<desea_cancelar_esta_captura>"¿Desea censurar esta captura: %1, probetas: %2 y %3?"</desea_cancelar_esta_captura>
+<si>"Sí"</si>
+<no>"No"</no>
+<_nuevo>"Nuevo"</_nuevo>
+<_crear>"Crear"</_crear>
+<_ya_existe>"Ya existe"</_ya_existe>
+<_el_proyecto_ya_existe>"El proyecto y experimento introducido ya esiste."</_el_proyecto_ya_existe>
+<_datos_incompletos>"Datos incompletos"</_datos_incompletos>
+<_al_menos_1_cond>"Debe de haber al menos 1 condición."</_al_menos_1_cond>
+<_ha_sido_creado>"Ha sido creado el Proyecto: %1, Experimento: %2."</_ha_sido_creado>
+<_creado>"¡Creado!"</_creado>
+<_guardar>"Guardar"</_guardar>
+<_editar>"Editar"</_editar>
+<_desea_editar>"¿Desea editar este experimento?"</_desea_editar>
+<_editar_experimento>"Editar Experimento"</_editar_experimento>
+<_la_tarea_ya_esta_capturada>"La tarea seleccionada ya está capturada"</_la_tarea_ya_esta_capturada>
+<_realizacion_tarea>"Realización de tarea"</_realizacion_tarea>
+<_desea_abrir>"¿Desea abrir?: \n\nProyecto:\t\t%1 \nExperimento: \t%2 \nTarea:\t\t%3\n"</_desea_abrir>
+<_espacio_estimado>"espacio_estimado: "</_espacio_estimado>
+<_no_hay_suficiente_espacio>"No hay suficiente espacio en Disco"</_no_hay_suficiente_espacio>
+<_se_estiman>"Se estiman %1 GigaBytes para esta tarea,solo quedan %2 GigaBytes \n\nLibere espacio de disco por favor"</_se_estiman>
+<_esta_accion_reemplazara>"Esta acción reemplazará todas las imágenes de la tarea ¿Desea reemplazarlas?"</_esta_accion_reemplazara>
+<_esta_accion_finalizara_experimento>"Esta acción dará por finalizado el experimento %1, del proyecto %2, a partir del día %3\n¿Desea finalizar el experimento?"</_esta_accion_finalizara_experimento>
+<_finalizar_experimento>"Finalizar experimento"</_finalizar_experimento>
+
+<_seleccion_de_experimento_y_tarea>"Selección de experimento y tarea"</_seleccion_de_experimento_y_tarea>
+<_buscar_y_seleccionar_experimento>"Buscar y Seleccionar experimento"</_buscar_y_seleccionar_experimento>
+<_Experimento>"Experimento:"</_Experimento>
+<_hora_inicio>"...hora(inicio):"</_hora_inicio>
+<_hora_fin>"...hora(fin):"</_hora_fin>
+<_nombre>"... nombre:"</_nombre>
+<_busqueda_por>"Búsqueda por..."</_busqueda_por>
+<_buscar>"Buscar"</_buscar>
+<_encontrados>"Encontrados:"</_encontrados>
+<_proyecto>"Proyecto:"</_proyecto>
+<_experimento>"Experimento:"</_experimento>
+<_dias_exp>"Días Exp.:"</_dias_exp>
+<_usuario>"Usuario:"</_usuario>
+<_fecha_inicio>"Fecha inicio:"</_fecha_inicio>
+<_hora_inicio_title>"Hora inicio:"</_hora_inicio_title>
+<_dia>"... día:"</_dia>
+<_finalizar>"Finalizar"</_finalizar>
+<_tareas>"Tareas"</_tareas>
+<_estado>"Estado"</_estado>
+<_rehacer>"Rehacer"</_rehacer>
+<_liberar_espacio_en_disco>"Liberar Espacio en Disco"</_liberar_espacio_en_disco>
+
+<_labelCompensando>"¡¡Compensando!!"</_labelCompensando>
+<_pushButton_continuar>"Continuar"</_pushButton_continuar>
+<_pushButton_recompensar>"Recompensar"</_pushButton_recompensar>
+<_pushButton_repetir>"Continuar"</_pushButton_repetir>
+<_windowTitle>"Capturador de Muestras"</_windowTitle>
+<_labelppal>"Ha habido un posible fallo en la captura o la probeta está contaminada"</_labelppal>
+
+<_introNumGusanos>"Cond: %1, Probeta: %2"</_introNumGusanos>
+<_eliminar>"Eliminar"</_eliminar>
+<_pendiente>"Pendiente"</_pendiente>
+<_capturada>"Capturada"</_capturada>
+<_preprocesada>"Pre-procesada"</_preprocesada>
+<_procesada>"Procesada"</_procesada>
+<_borrada>"Borrada"</_borrada>
+<_cancelada>"Censurada"</_cancelada>
+<_borrar>"Día: %1 - %2"</_borrar>
+
+<_DNI>"DNI"</_DNI>
+<_clave>"Contraseña"</_clave>
+<_registrarse>"Registrarse"</_registrarse>
+<_no_ha_seleccionado_proyecto>"No ha seleccionado ningún proyecto."</_no_ha_seleccionado_proyecto>
+
+<_num_Celegans>"Número de C.elegans"</_num_Celegans>
+<_conteo_manual>"Conteo Manual de C.elegans"</_conteo_manual>
+<_introducir>"Introducir"</_introducir>
+
+</opencv_storage>

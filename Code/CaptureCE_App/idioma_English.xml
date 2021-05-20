@@ -1,0 +1,87 @@
+<?xml version="1.0"?>
+<opencv_storage>
+<sobreescribir_windowTitle>"Overwrite"</sobreescribir_windowTitle>
+<seleccione_una_tarea>"Task selection"</seleccione_una_tarea>
+<desea_sobrescribir>"Do you want to overwrite condition: %1, plate: %2 y %3?"</desea_sobrescribir>
+<aceptar>"Accept"</aceptar>
+<cancelar>"Cancel"</cancelar>
+<grabando>"Recording..."</grabando>
+<parado>"Stopped"</parado>
+<fin_tarea>"Task end!"</fin_tarea>
+<reescribir>"Rewrite..."</reescribir>
+<siguiente>"Next..."</siguiente>
+<dia_cond_prob>"Day: %1, Cond: %2, Plate: %3"</dia_cond_prob>
+<cancelacion>"Censure"</cancelacion>
+<desea_cancelar_esta_captura>"Do yo want to censure this task: %1, plates: %2 y %3?"</desea_cancelar_esta_captura>
+<si>"Yes"</si>
+<no>"No"</no>
+<_nuevo>"New"</_nuevo>
+<_crear>"Create"</_crear>
+<_ya_existe>"It already existis."</_ya_existe>
+<_el_proyecto_ya_existe>"The project and experiment introduced already exist."</_el_proyecto_ya_existe>
+<_datos_incompletos>"Incomplete data"</_datos_incompletos>
+<_al_menos_1_cond>"Must have at least 1 condition."</_al_menos_1_cond>
+<_ha_sido_creado>"The project has been created: %1, Experiment: %2."</_ha_sido_creado>
+<_creado>"Created!"</_creado>
+<_guardar>"Save"</_guardar>
+<_editar>"Edit"</_editar>
+<_desea_editar>"Do you want to edit this experiment?"</_desea_editar>
+<_editar_experimento>"Edit experiment"</_editar_experimento>
+<_la_tarea_ya_esta_capturada>"The selected task is already captured"</_la_tarea_ya_esta_capturada>
+<_realizacion_tarea>"Task execution"</_realizacion_tarea>
+<_desea_abrir>"Do you want to open?: \n\nProject:\t\t%1 \nExperiment: \t%2 \nTask:\t\t%3\n"</_desea_abrir>
+<_espacio_estimado>"Estimated space: "</_espacio_estimado>
+<_no_hay_suficiente_espacio>"There is not enough disk space."</_no_hay_suficiente_espacio>
+<_se_estiman>"%1 GigaBytes are estimated for this task, only %2 GigaBytes remain \n\nPlease release disk space."</_se_estiman>
+<_esta_accion_reemplazara>"This action will replace all the images in the task. Do you want to replace them?"</_esta_accion_reemplazara>
+<_esta_accion_finalizara_experimento>"This action will terminate experiment %1, from project %2, from day %3 \nDo you want to finish the experiment?"</_esta_accion_finalizara_experimento>
+<_finalizar_experimento>"Experiment ends"</_finalizar_experimento>
+<_seleccion_de_experimento_y_tarea>"Task and Experiment selection"</_seleccion_de_experimento_y_tarea>
+<_buscar_y_seleccionar_experimento>"Search and select an experiment"</_buscar_y_seleccionar_experimento>
+<_Experimento>"Experiment:"</_Experimento>
+<_hora_inicio>"...hour(start):"</_hora_inicio>
+<_hora_fin>"...hour(end):"</_hora_fin>
+<_nombre>"...name:"</_nombre>
+<_busqueda_por>"Search by..."</_busqueda_por>
+<_buscar>"Search"</_buscar>
+<_encontrados>"Founds:"</_encontrados>
+<_proyecto>"Project:"</_proyecto>
+<_experimento>"Experiment:"</_experimento>
+<_dias_exp>"Exp. Days:"</_dias_exp>
+<_usuario>"User:"</_usuario>
+<_fecha_inicio>"Start date:"</_fecha_inicio>
+<_hora_inicio_title>"Start hour:"</_hora_inicio_title>
+<_dia>"... day:"</_dia>
+<_finalizar>"Finish"</_finalizar>
+<_tareas>"Tasks"</_tareas>
+<_estado>"State"</_estado>
+<_rehacer>"Redo"</_rehacer>
+<_liberar_espacio_en_disco>"Release disk space"</_liberar_espacio_en_disco>
+
+<_labelCompensando>"Compensating!!"</_labelCompensando>
+<_pushButton_continuar>"Continue"</_pushButton_continuar>
+<_pushButton_recompensar>"Compensate again"</_pushButton_recompensar>
+<_pushButton_repetir>"Continuar"</_pushButton_repetir>
+<_windowTitle>"Sample Capture"</_windowTitle>
+<_labelppal>"There has been a possible failure to capture or plate is contaminated"</_labelppal>
+
+<_introNumGusanos>"Cond: %1, Plate: %2"</_introNumGusanos>
+<_eliminar>"Delete"</_eliminar>
+<_pendiente>"Pending"</_pendiente>
+<_capturada>"Captured"</_capturada>
+<_preprocesada>"Pre-processed"</_preprocesada>
+<_procesada>"Processed"</_procesada>
+<_borrada>"Deleted"</_borrada>
+<_cancelada>"Censured"</_cancelada>
+<_borrar>"Day: %1 - %2"</_borrar>
+
+<_DNI>"ID"</_DNI>
+<_clave>"Password"</_clave>
+<_registrarse>"Sign up"</_registrarse>
+<_no_ha_seleccionado_proyecto>"There is not project selection."</_no_ha_seleccionado_proyecto>
+
+<_num_Celegans>"C.elegans amount"</_num_Celegans>
+<_conteo_manual>"C.elegans Manual Count"</_conteo_manual>
+<_introducir>"Enter"</_introducir>
+
+</opencv_storage>
