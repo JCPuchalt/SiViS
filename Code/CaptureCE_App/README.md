@@ -1,5 +1,6 @@
 # This program is developed for Ubuntu (18.04)
-## Program need a database (Dump20210521.sql), therefore
+## Database
+Program need a database (Dump20210521.sql), therefore
 mysql-server installation is need. Build file installs mysql, configures it and creates the database. 
 To execute build, open a terminal and run the following instructions:
 
@@ -7,20 +8,22 @@ Set in Capture_App folder
 `cd SiVis/Code/Capture_App`
 
 Change file permissions
-chmod +x build.sh
+`chmod +x build.sh`
 
 Execute file
-./build
+`./build`
 
-## Once database is running, you can run CaptureCE programm
+## Once database is running
+CaptureCE programm can run
+
 Set in Capture_App folder
-cd SiVis/Code/Capture_App
+`cd SiVis/Code/Capture_App`
 
 Change file permissions
-chmod +x CapturaCE
+`chmod +x CapturaCE`
 
 Execute file
-./CapturaCE
+`./CapturaCE`
 
 ## Considerations
 192.168.1.102
