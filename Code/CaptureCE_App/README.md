@@ -4,7 +4,7 @@ mysql-server installation is need. Build file installs mysql, configures it and 
 To execute build, open a terminal and run the following instructions:
 
 Set in Capture_App folder
-cd SiVis/Code/Capture_App
+`cd SiVis/Code/Capture_App`
 
 Change file permissions
 chmod +x build.sh
