@@ -1,27 +1,21 @@
 ## SiViS_App
-This code is developed for assessing:
-[1] "Active backlight for automating visual monitoring: an analysis of a lighting
-control technique for Caenorhabditis elegans cultured on standard Petri plates" PLOS ONE
-Copyright (c) 2018 UPV and Biopolis. A.Sánchez, J.Puchalt, P.Martorell and S.Genovés
+This code is downloaded and installed on Rasperry Pi 4. 
+It may be useful to consult previous documentation in https://github.com/JCPuchalt/c-elegans_smartLight.
 
-### Research article
-Puchalt JC, Sánchez-Salmerón AJ, Martorell Guerola P, Genovés Martínez S (2019) Active backlight for automating visual monitoring: An analysis of a lighting control technique for Caenorhabditis elegans cultured on standard Petri plates. PLOS ONE 14(4): e0215548. https://doi.org/10.1371/journal.pone.0215548
-
-### Hardware description on [1]
+### Hardware description
 Components:
-* Raspberry Pi 3
+* Raspberry Pi 4
 * Pi NoIR Camera V1
 * 7" Raspberry Pi Display
 * Raspberry power supply (at least 2Amp)
 * Micro SD card (at least 16GB)
-* Assemble them as indicated in document https://github.com/JCPuchalt/c-elegans_smartLight/blob/master/S2_Appendix.pdf
 
 The camera should be coplanar to the display focusing at the center of it at a distance of about 8cm.
 The camera and the display must be firmly grasped, since any minimum displacement will decalibrate 
 the camera-display correspondences.
 
 ### Easy software installation
-* Install raspbian on Raspberry Pi 3. 
+* Install raspbian on Raspberry Pi 4. 
     1. Download raspbian installer (NOOBS) from https://www.raspberrypi.org/downloads/noobs/
     2. Unzip the downloaded files
     3. Format a Micro SD with FAT32
@@ -36,10 +30,10 @@ the camera-display correspondences.
     2. Launch file set\_up\_whole\_system.sh and follow instructions. On terminal, set file folder (for example: /home/pi/SiViS\_App) 
         ````
         cd /home/pi/SiViS_App
+	chmod +x set_up_whole_system.sh
         sh ./set_up_whole_system.sh
         ````
-        
-        
+
 ## Software installation details of set_up_whole_system.sh. It will install and set:
 
 * Download and install OpenCV 3.0 and opencv_contrib
@@ -63,7 +57,7 @@ the camera-display correspondences.
 ## Run code on Raspberry Pi
 Connect from PC to Raspberry Pi through SSH (on Windows with PuTTY (https://www.ssh.com/ssh/putty/download) or Linux with terminal `ssh pi@Raspberry_IP_Adrees`). That terminal is connected to Raspberry, so type on that terminal:
 ````
-cd c-elegans_smartLight
+cd SiViS_App
 sudo ./c-elegans
 ````
 
