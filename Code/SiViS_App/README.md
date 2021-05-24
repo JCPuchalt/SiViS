@@ -47,9 +47,9 @@ the camera-display correspondences.
 * Enable SSH
 * Enable camera
 * Disable camera led
-* Download and install c-elegans_smartLight program. Copy code in a folder [/home/pi/]
+* Download and install SiViS\_App program. Copy code in a folder [/home/pi/]
     ````
-    cd c-elegans_smartLight
+    cd SiViS_App
     cmake .
     make
     ````
