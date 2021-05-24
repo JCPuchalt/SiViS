@@ -30,7 +30,7 @@ the camera-display correspondences.
     2. Launch file set\_up\_whole\_system.sh and follow instructions. On terminal, set file folder (for example: /home/pi/SiViS\_App) 
         ````
         cd /home/pi/SiViS_App
-	chmod +x set_up_whole_system.sh
+        chmod +x set_up_whole_system.sh
         sh ./set_up_whole_system.sh
         ````
 
