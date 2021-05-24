@@ -44,11 +44,12 @@ Assembly the pallet part as follow https://github.com/JCPuchalt/SiViS/blob/maste
 ## The Code
 You shall download this repository on Ubuntu 18.04 machine in the folder you wish. 
 Once download, open a terminal and set in the SiViS folder.
-### CaptureCE_App
-Then follow the README.md file of Code/CaptureCE_App folder.
-### ProcessorCE_App
-Then follow the README.md file of Code/ProcessorCE_App folder.
-### SiViS_App
-Then follow the README.md file of Code/SiViS_App folder.
+1. CaptureCE_App
+   Then follow the README.md file of Code/CaptureCE_App folder.
+2. ProcessorCE_App
+   Then follow the README.md file of Code/ProcessorCE_App folder.
+3. SiViS_App
+   Then follow the README.md file of Code/SiViS_App folder.
+
 
 
