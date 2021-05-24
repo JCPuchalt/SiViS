@@ -1,0 +1,1663 @@
+#pragma once
+
+#include "../llibreries/llibreries.hpp"
+#include "../llibreries/camara.hpp"
+
+
+#ifdef _DEBUG    
+#pragma comment(lib, "opencv_core246d.lib")     
+#pragma comment(lib, "opencv_imgproc246d.lib")   //MAT processing    
+#pragma comment(lib, "opencv_highgui246d.lib")    
+#pragma comment(lib, "opencv_stitching246d.lib");  
+  
+#else    
+#pragma comment(lib, "opencv_core246.lib")    
+#pragma comment(lib, "opencv_imgproc246.lib")    
+#pragma comment(lib, "opencv_highgui246.lib")    
+#pragma comment(lib, "opencv_stitching246.lib");  
+#endif  
+
+using namespace cv;
+using namespace std;
+
+/** Histograma de Referencia **/
+double H_Referencia[256]={0};
+
+
+float puntos_pantalla[90][2]=
+{
+			     {0, 0}, {42*1*texelRatio, 7*42},	{0, 0}, {42*3*texelRatio, 7*42}, 	{0, 0}, {42*5*texelRatio,  7*42},   {0, 0},  {42*7*texelRatio,  7*42},   {0, 0},  {42*9*texelRatio,   7*42},   {0, 0},
+	{0, 42*6}, 	     {0, 0}, {42*2*texelRatio, 6*42}, 	{0, 0}, {42*4*texelRatio, 6*42}, 	{0, 0}, {42*6*texelRatio,  6*42},   {0, 0},  {42*8*texelRatio,  6*42},   {0, 0},  {42*10*texelRatio,  6*42},
+	
+			     {0, 0}, {42*1*texelRatio, 5*42},	{0, 0}, {42*3*texelRatio, 5*42},	{0, 0}, {42*5*texelRatio,  5*42},   {0, 0},  {42*7*texelRatio,  5*42},   {0, 0},  {42*9*texelRatio,   5*42},   {0, 0},
+	{0, 42*4}, 	     {0, 0}, {42*2*texelRatio, 4*42}, 	{0, 0}, {42*4*texelRatio, 4*42},	{0, 0}, {42*6*texelRatio,  4*42},   {0, 0},  {42*8*texelRatio,  4*42},   {0, 0},  {42*10*texelRatio,  4*42},
+
+			     {0, 0}, {42*1*texelRatio, 3*42}, 	{0, 0}, {42*3*texelRatio, 3*42},	{0, 0}, {42*5*texelRatio,  3*42},   {0, 0},  {42*7*texelRatio,  3*42},   {0, 0},  {42*9*texelRatio,   3*42},   {0, 0},
+	{0, 42*2},  	     {0, 0}, {42*2*texelRatio, 2*42},  	{0, 0}, {42*4*texelRatio, 2*42},	{0, 0}, {42*6*texelRatio,  2*42},   {0, 0},  {42*8*texelRatio,  2*42},   {0, 0},  {42*10*texelRatio,  2*42},
+
+			     {0, 0}, {42*1*texelRatio,   42}, 	{0, 0}, {42*3*texelRatio, 1*42},	{0, 0}, {42*5*texelRatio,  1*42},   {0, 0},  {42*7*texelRatio,  1*42}, 	 {0, 0},  {42*9*texelRatio,   1*42},   {0, 0},
+	{0,    0}, 	     {0, 0}, {42*2*texelRatio,    0}, 	{0, 0}, {42*4*texelRatio,    0},	{0, 0}, {42*6*texelRatio,     0},   {0, 0},  {42*8*texelRatio,     0},   {0, 0},  {42*10*texelRatio,     0}                     
+
+};
+
+
+/***************************************************************************************
+Constructuor de Clase: "camara". Inicio de clase. Crea, inicializa... variables
+****************************************************************************************/
+camara::camara( int iD, int numero_camaras, sistema_visio* SiVi )
+{
+	H_Referencia[43]=0.1;
+	H_Referencia[44]=0.3;
+	H_Referencia[45]=1.2;
+	H_Referencia[46]=5.5;
+	H_Referencia[47]=16.5;
+	H_Referencia[48]=28.0;
+	H_Referencia[49]=25.5;
+	H_Referencia[50]=13.8;
+	H_Referencia[51]=5.6;
+	H_Referencia[52]=1.8;
+	H_Referencia[53]=0.5;
+	H_Referencia[54]=0.1;
+
+	corregir_x=0; corregir_y=0; CNTA=0;
+    	Iteracions_Compensacio = 1;
+	minim_error_compensacio = 100.0;
+    	MET_Ant=0; mija_error_compensacio=0;
+    	It_Erro=0; min_found=false;
+    	alpha=0; tamInterseccio=0; tamFusionadaParcial=0;
+	errorQuadraticMig_Anterior=0;
+	tamInterseccionParcial=0;
+	enviaInfoAlMaster=false;
+	enviaInfoAlPrincipal=false;
+	tablaParcial_Enviada=false;
+	num_camaras = numero_camaras;
+
+	bloquejat=false; capturando=false; inici_local=false;
+	inici_remot=false; iniciat=false; fin_captura=false;
+
+	compensada=true;
+	SV = SiVi; 
+
+	FYmin=0; FYmax=0;
+	minimIdx = 10000000;
+	maximIdx = 0;
+
+	reset_comp=false;
+	calibrada=false; recalibrar=false;
+	matriuCalibracioRebuda=false;
+	matriuCalibracioEnviada=false;
+	PREPARADA_COMUNICAR = false;
+
+	tablaInterseccionParcial_Calculada=false; tablaInterseccionParcial_Enviada=false;
+	tablaFusionadaParcial_Calculada=false;   tablaInterseccionParcial_Recibida=false;
+
+	idCam = iD;
+	nameWin="visor";
+
+	//
+	if(MODO_ENFOQUE) {
+		//namedWindow(nameWin,0);
+	}
+
+	escala=1;
+	ordenes1=0;
+	ordenes2=0;
+	estadoCalibracion=0;
+
+	mostrar_tex.CreateRGBA ( 431, 480 ); //WIDTH_PANT, HEIGHT_PANT );
+	mostrar_tex.GenerateFrameBuffer();
+
+
+	strcpy(ruta_homography		, "./configuracio/homografia");
+	strcpy(ruta_homographyPlanoPlaca, "./h");
+	strcpy(ruta_patron		, "./configuracio/p");
+	strcpy(ruta_tablaCalibracion    , "./configuracio/tablaCalibracion");
+	strcpy(ruta_tablaInterseccion   , "./configuracio/tablaInterseccion");
+
+	//
+	matriuRebuda			= (char*) malloc ( sizeof(char) * 300 );
+	tablaAenviar 			= (char*) malloc ( sizeof(int) * 900*480*2 );
+	tablasXenviar			= (char*) malloc ( sizeof(int) * 500000);
+	tablaAenviarImageParcial 	= (char*) malloc ( sizeof(int) * 3000*3000 );
+	imageParcial			= (unsigned char*) malloc ( sizeof(char) * 3000*3000  );
+
+	tablaFusionadaParcial 		= (long int*) malloc (sizeof(long int) * WIDTH_FRAME * HEIGHT_FRAME * 2);
+	memset ( tablaFusionadaParcial, 0, sizeof(long int) * WIDTH_FRAME * HEIGHT_FRAME * 2);
+
+	tablaInterseccionParcial	= (long int*) malloc (sizeof(long int) * WIDTH_FRAME * HEIGHT_FRAME * num_camaras);
+	memset ( tablaInterseccionParcial, 0, sizeof(long int) * WIDTH_FRAME * HEIGHT_FRAME * num_camaras);
+
+	tablaInterseccionParcial_C	= (long int*) malloc (sizeof(long int) * WIDTH_FRAME * HEIGHT_FRAME * num_camaras);
+	memset ( tablaInterseccionParcial_C, 0, sizeof(long int) * WIDTH_FRAME * HEIGHT_FRAME * num_camaras);
+
+	tabla_calibracion		= (long int*) 	   malloc (sizeof(long int)  * 900*480*2);
+	//tabla_calibracionDirecta	= (long int*) 	   malloc (sizeof(long int)  * WIDTH_FRAME*HEIGHT_FRAME);
+	tabla_calibracionFusion		= (long int*) 	   malloc (sizeof(long int)  * WIDTH_FRAME*HEIGHT_FRAME*4);
+	tablaInterseccionIndividual	= (int*) 	   malloc (sizeof(int)  * 200000);
+
+
+	//segmentada			= (unsigned char*) malloc (sizeof(char)      * WIDTH_FRAME*HEIGHT_FRAME );
+	// Buffer de la imagen a tratar (capturada) Su resolución puede variar
+	quadrat				= (unsigned char*) malloc (sizeof(char) * 12182016 ); //2592*2592); //WIDTH_FRAME * HEIGHT_FRAME ); //12182016
+	memset(quadrat,  0, sizeof(char)      *  12182016 );
+
+	// Imagen comprimida (de quadrat) de la zona de intersección. Esta zona es pequeña,
+	// la dividimos por 30 del tamaño total (es un porcentaje estimado )
+	imageInterseccioComprimida	= (unsigned char*) malloc (sizeof(char)      * 431*480*4 );
+	memset(imageInterseccioComprimida, 0, sizeof(char) * 431*480*4 );
+
+	// Imagen de la intersección
+	imageInterseccioParcial	= (unsigned char*) malloc (sizeof(char)      * 500000 );
+	memset(imageInterseccioParcial, 0, sizeof(char)*500000 );
+
+	vector_mostrar_ant 		= (unsigned char*) malloc (sizeof(char)      * 431*480*4);
+	vector_mostrar_minim_error 	= (unsigned char*) malloc (sizeof(char)      * 431*480*4);
+
+	texturaComprimida		= (unsigned char*) malloc (sizeof(char)      * 900*480*2);
+	imagenPROVA 			= (unsigned char *) malloc(sizeof(char)	     *2592*(500) );
+
+	//Init_Textura_Groc();
+
+	memset(tabla_calibracion,        0, sizeof(int)*861*480*2);
+			//memset(tabla_calibracionDirecta, 0, sizeof(int)*WIDTH_FRAME*HEIGHT_FRAME);
+	memset(tablaInterseccionIndividual, 0, sizeof(int)*200000 );
+	memset(tabla_calibracionFusion,  0, sizeof(int)*WIDTH_FRAME*HEIGHT_FRAME*4);
+	memset(texturaComprimida, '\0', sizeof(char)*900*480*2 );
+
+//	pthread_t reproduir_id;
+//	pthread_create(&reproduir_id, NULL, Reproduir_Audio, NULL );
+
+
+	//if ( idCam == idCam_Ppal ||  withMUX) 
+	// Si la RPI NO es Master y se trabaja sin MUX se crearán hilos de conexión 
+	// con el display del Máster
+	if( idCam==idCam_Ppal && !withMUX ) //!esMaster && idCam==idCam_Ppal && !withMUX)
+	{
+		cout << "\033[1;31mConectando: " << idCam << " con el Display Master" << "\033[0m"<< endl;
+		pthread_t clienteRASP_id;
+		pthread_create(&clienteRASP_id, NULL, clienteRASPBERRY, this );
+	}
+
+	// Se crea si es Sistema Vision Secundario y se trabaja sin MUX
+	if( SV_Secundario )  // idCam == idCam_Ppal && idCam!=1
+	{
+		cout << "\033[1;31mConectando " << idCam << " con Sistema de Visión Principal" << "\033[0m" << endl;
+		pthread_t clienteSV_id;
+		pthread_create(&clienteSV_id, NULL, clienteSistemaVision, this );
+	}
+
+	// Se crea una conexio en atre programa per a poder enfocar les imagens
+	if(MODO_ENFOQUE) {
+		cliente = new clienteTCP_IP(this);
+	}
+
+	Init_It_Imagens();
+
+	Init_Erro_Minim();
+	Init_It_Error();
+	Init_Erro_Mija();
+	
+	// Si se treballa en MUX <<<<<<<<<<<<<<<----------------------- Si es MONO-CAMARA
+	if( idCam==idCam_Ppal || withMUX ) {
+		crearFil();
+	}
+
+}
+
+
+/***************************************************************************************
+Constructuor de Clase: "camara". Inicio de clase. Crea, inicializa... variables
+****************************************************************************************/
+camara::camara( int iD, int numero_camaras )
+{
+	H_Referencia[43]=0.1;
+	H_Referencia[44]=0.3;
+	H_Referencia[45]=1.2;
+	H_Referencia[46]=5.5;
+	H_Referencia[47]=16.5;
+	H_Referencia[48]=28.0;
+	H_Referencia[49]=25.5;
+	H_Referencia[50]=13.8;
+	H_Referencia[51]=5.6;
+	H_Referencia[52]=1.8;
+	H_Referencia[53]=0.5;
+	H_Referencia[54]=0.1;
+
+	corregir_x=0; corregir_y=0; CNTA=0;
+    	Iteracions_Compensacio = 1;
+	minim_error_compensacio = 100.0;
+    	MET_Ant=0; mija_error_compensacio=0;
+    	It_Erro=0; min_found=false;
+    	alpha=0; tamInterseccio=0; tamFusionadaParcial=0;
+	errorQuadraticMig_Anterior=0;
+	tamInterseccionParcial=0;
+	enviaInfoAlMaster=false;
+	enviaInfoAlPrincipal=false;
+	num_camaras = numero_camaras;
+	compensada=false;
+
+	FYmin=0; FYmax=0;
+	minimIdx = 10000000;
+	maximIdx = 0;
+
+	reset_comp=false;
+	calibrada=false; recalibrar=false;
+	matriuCalibracioRebuda=false;
+	matriuCalibracioEnviada=false;
+	PREPARADA_COMUNICAR = false;
+
+	tablaInterseccionParcial_Calculada=false; tablaInterseccionParcial_Enviada=false;
+	tablaFusionadaParcial_Calculada=false;   tablaInterseccionParcial_Recibida=false;
+
+	idCam = iD;
+	nameWin="visor";
+
+	//
+	if(MODO_ENFOQUE) {
+		//namedWindow(nameWin,0);
+	}
+
+	escala=1;
+	ordenes1=0;
+	ordenes2=0;
+	estadoCalibracion=0;
+
+	mostrar_tex.CreateRGBA ( 431, 480 ); //WIDTH_PANT, HEIGHT_PANT );
+	mostrar_tex.GenerateFrameBuffer();
+
+
+	strcpy(ruta_homography		, "./configuracio/homografia");
+	strcpy(ruta_homographyPlanoPlaca, "/home/pi/h");
+	strcpy(ruta_patron		, "./configuracio/p");
+	strcpy(ruta_tablaCalibracion    , "./configuracio/tablaCalibracion");
+	strcpy(ruta_tablaInterseccion   , "./configuracio/tablaInterseccion");
+
+	//
+	matriuRebuda			= (char*) malloc ( sizeof(char) * 300 );
+	tablaAenviar 			= (char*) malloc ( sizeof(int) * 900*480*2 );
+	tablaAenviarImageParcial 	= (char*) malloc ( sizeof(int) * 3000*3000 );
+	tablasXenviar			= (char*) malloc ( sizeof(int) * 500000);
+	imageParcial			= (unsigned char*) malloc ( sizeof(char) * 3000*3000  );
+
+	tablaFusionadaParcial 		= (long int*) malloc (sizeof(long int) * WIDTH_FRAME * HEIGHT_FRAME * 2);
+	memset ( tablaFusionadaParcial, 0, sizeof(long int) * WIDTH_FRAME * HEIGHT_FRAME * 2);
+
+	tablaInterseccionParcial	= (long int*) malloc (sizeof(long int) * WIDTH_FRAME * HEIGHT_FRAME * num_camaras);
+	memset ( tablaInterseccionParcial, 0, sizeof(long int) * WIDTH_FRAME * HEIGHT_FRAME * num_camaras);
+
+	tablaInterseccionParcial_C	= (long int*) malloc (sizeof(long int) * WIDTH_FRAME * HEIGHT_FRAME * num_camaras);
+	memset ( tablaInterseccionParcial_C, 0, sizeof(long int) * WIDTH_FRAME * HEIGHT_FRAME * num_camaras);
+
+	tabla_calibracion		= (long int*) 	   malloc (sizeof(long int)  * 900*480*2);
+	//tabla_calibracionDirecta	= (long int*) 	   malloc (sizeof(long int)  * WIDTH_FRAME*HEIGHT_FRAME);
+	tabla_calibracionFusion		= (long int*) 	   malloc (sizeof(long int)  * WIDTH_FRAME*HEIGHT_FRAME*4);
+	tablaInterseccionIndividual	= (int*) 	   malloc (sizeof(int)  * 200000);
+
+
+	//segmentada			= (unsigned char*) malloc (sizeof(char)      * WIDTH_FRAME*HEIGHT_FRAME );
+	// Buffer de la imagen a tratar (capturada) Su resolución puede variar
+	quadrat				= (unsigned char*) malloc (sizeof(char) * 12182016 ); //2592*2592); //WIDTH_FRAME * HEIGHT_FRAME ); //12182016
+	memset(quadrat,  0, sizeof(char)      *  12182016 );
+
+	// Imagen comprimida (de quadrat) de la zona de intersección. Esta zona es pequeña,
+	// la dividimos por 30 del tamaño total (es un porcentaje estimado )
+	imageInterseccioComprimida	= (unsigned char*) malloc (sizeof(char)      * 431*480*4 );
+	memset(imageInterseccioComprimida, 0, sizeof(char) * 431*480*4 );
+
+	// Imagen de la intersección
+	imageInterseccioParcial	= (unsigned char*) malloc (sizeof(char)      * 500000 );
+	memset(imageInterseccioParcial, 0, sizeof(char)*500000 );
+
+	vector_mostrar_ant 		= (unsigned char*) malloc (sizeof(char)      * 431*480*4);
+	vector_mostrar_minim_error 	= (unsigned char*) malloc (sizeof(char)      * 431*480*4);
+
+	texturaComprimida		= (unsigned char*) malloc (sizeof(char)      * 900*480*2);
+	imagenPROVA 			= (unsigned char *) malloc(sizeof(char)	     *2592*(500) );
+
+	//Init_Textura_Groc();
+
+	memset(tabla_calibracion,        0, sizeof(int)*861*480*2);
+			//memset(tabla_calibracionDirecta, 0, sizeof(int)*WIDTH_FRAME*HEIGHT_FRAME);
+	memset(tablaInterseccionIndividual, 0, sizeof(int)*200000 );
+	memset(tabla_calibracionFusion,  0, sizeof(int)*WIDTH_FRAME*HEIGHT_FRAME*4);
+	memset(texturaComprimida, '\0', sizeof(char)*900*480*2 );
+
+//	pthread_t reproduir_id;
+//	pthread_create(&reproduir_id, NULL, Reproduir_Audio, NULL );
+
+
+	//if ( idCam == idCam_Ppal ||  withMUX) 
+	// Si la RPI NO es Master y se trabaja sin MUX se crearán hilos de conexión 
+	// con el display del Máster
+	if( idCam==idCam_Ppal && !withMUX ) //!esMaster && idCam==idCam_Ppal && !withMUX)
+	{
+		cout << "\033[1;31mConectando: " << idCam << " con el Display Master" << "\033[0m"<< endl;
+		pthread_t clienteRASP_id;
+		pthread_create(&clienteRASP_id, NULL, clienteRASPBERRY, this );
+	}
+
+	// Se crea si es Sistema Vision Secundario y se trabaja sin MUX
+	if( SV_Secundario )  // idCam == idCam_Ppal && idCam!=1
+	{
+		cout << "\033[1;31mConectando " << idCam << " con Sistema de Visión Principal" << "\033[0m" << endl;
+		pthread_t clienteSV_id;
+		pthread_create(&clienteSV_id, NULL, clienteSistemaVision, this );
+	}
+
+	// Se crea una conexio en atre programa per a poder enfocar les imagens
+	if(MODO_ENFOQUE) {
+		cliente = new clienteTCP_IP(this);
+	}
+
+	Init_It_Imagens();
+
+	Init_Erro_Minim();
+	Init_It_Error();
+	Init_Erro_Mija();
+
+}
+
+
+void camara::crearFil (void)
+{
+	// Crear Una conexio al Servidor. Per a cada Sistema de Visio
+	//fils* fil = new fils();
+	//fil->StartInternalThread(this);
+	cout << "GetId(): " << this->GetId() << endl;
+	pthread_create ( &conexionServidor_id, NULL, Conexion_Servidor, this );
+	cout << "pthread: " << conexionServidor_id << endl;
+}
+
+
+
+/************************************************
+Fixar el Display
+************************************************/
+void camara::setDisplay (Display* disp)
+{
+	display=disp;
+
+	ImagenDisplayVector  = display->pImagenDisplayVector();
+	ImagenDisplayTextura = display->pImagenDisplayTextura();
+
+}
+
+
+/************************************************
+Crear la ruta de la homografia
+************************************************/
+void camara::crear_ruta_homografia (void)
+{
+	string conf = int2string(config); //num_camaras
+	strcat( ruta_homography, conf.c_str() );
+
+	string sistVis = int2string(idSV);  //idSV
+	strcat( ruta_homography, sistVis.c_str() );
+
+	string sancer = int2string(idCam);
+	strcat( ruta_homography, sancer.c_str() );
+
+	strcat( ruta_homography,".xml");
+
+	cout << ruta_homography << endl;
+}
+
+
+/************************************************
+Crear la ruta de la homografia
+************************************************/
+void camara::crear_ruta_homografiaPlanoPlaca (void)
+{
+	string conf = int2string(config); //num_camaras
+	strcat( ruta_homographyPlanoPlaca, conf.c_str() );
+
+	string sistVis = int2string(idSV);  //idSV
+	strcat( ruta_homographyPlanoPlaca, sistVis.c_str() );
+
+	string sancer = int2string(idCam);
+	strcat( ruta_homographyPlanoPlaca, sancer.c_str() );
+
+	strcat( ruta_homographyPlanoPlaca,".xml");
+
+	//cout << ruta_homographyPlanoPlaca << endl;
+}
+
+
+
+/************************************************
+Crear la ruta del patron
+************************************************/
+void camara::crear_ruta_patron (void)
+{
+	string conf = int2string(config); //num_camaras
+	strcat( ruta_patron, conf.c_str() );
+
+	string sistVis = int2string(idSV);  //idSV
+	strcat( ruta_patron, sistVis.c_str() );
+
+	string sancer = int2string(idCam);
+	strcat( ruta_patron, sancer.c_str() );
+
+	strcat( ruta_patron,".xml");
+
+	//cout  << ruta_patron << endl;
+}
+
+
+/************************************************
+Crear la ruta de la tabla de calibracion
+************************************************/
+void camara::crear_ruta_tablaCalibracion (void)
+{
+	string conf = int2string(config); //num_camaras
+	strcat( ruta_tablaCalibracion, conf.c_str() );
+
+	string sistVis = int2string(idSV);  //idSV
+	strcat( ruta_tablaCalibracion, sistVis.c_str() );
+
+	string sancer = int2string(idCam);
+	strcat( ruta_tablaCalibracion, sancer.c_str() );
+
+	strcat( ruta_tablaCalibracion,".cnf");
+
+	//cout  << ruta_tablaCalibracion << endl;
+
+}
+
+
+/************************************************
+Crear la ruta de la tabla de interseccion
+************************************************/
+void camara::crear_ruta_tablaInterseccion (void)
+{
+	string conf = int2string(config); //num_camaras
+	strcat( ruta_tablaInterseccion, conf.c_str() );
+
+	string sistVis = int2string(idSV);  //idSV
+	strcat( ruta_tablaInterseccion, sistVis.c_str() );
+
+	string sancer = int2string(idCam); //numPort
+	strcat( ruta_tablaInterseccion, sancer.c_str() );
+
+	strcat( ruta_tablaInterseccion,".cnf");
+
+	//cout  << ruta_tablaInterseccion << endl;
+
+}
+
+/************************************************
+Fixar el port de la camara
+************************************************/
+void camara::setPort 	(int p7, int p11, int p12)
+{
+	portMUX[0] = p7; portMUX[1] = p11; portMUX[2] = p12;
+}
+
+
+/************************************************
+Inicialisar Textura
+************************************************/
+void camara::Init_Textura_Groc(void)
+{
+    for(int k=0; k<431*480*4; k=k+4)
+    {
+        vector_mostrar_ant[k]  =   0;
+        vector_mostrar_ant[k+1]=   0;
+        vector_mostrar_ant[k+2]=   0;
+        vector_mostrar_ant[k+3]= 255;
+    }
+
+    for(int k=0; k<431*480*4; k=k+4)
+    {
+        vector_mostrar_minim_error[k]  = 255;
+        vector_mostrar_minim_error[k+1]= 127;
+        vector_mostrar_minim_error[k+2]=   0;
+        vector_mostrar_minim_error[k+3]= 255;
+    }
+
+    mostrar_tex.SetPixels( vector_mostrar_ant );
+
+}
+
+
+/************************************************
+Textura Blanca
+************************************************/
+void camara::texturaBlanca(void)
+{
+
+    for(int cnt=0; cnt<CNTA; cnt=cnt+2 )
+    {
+        long int posIM  = tabla_calibracion[cnt];
+        long int posTEX = tabla_calibracion[cnt+1];
+
+         ImagenDisplayVector[posTEX]   = 255;
+         ImagenDisplayVector[posTEX+1] = 255;
+         ImagenDisplayVector[posTEX+2] = 255;
+         ImagenDisplayVector[posTEX+3] = 255;
+    }
+
+}
+
+/************************************************
+Textura Blanca
+************************************************/
+void sistema_visio::texturaColor(int Rc, int Gc, int Bc )
+{
+
+    for(int k=0; k<855*480*4; k=k+4 )
+    {
+
+         ImagenDisplayVector[k]   = Rc;
+         ImagenDisplayVector[k+1] = Gc;
+         ImagenDisplayVector[k+2] = Bc;
+         ImagenDisplayVector[k+3] = 255;
+    }
+
+}
+
+
+/************************************************
+Inicialisar Fondo
+************************************************/
+void camara::Init_Textura(void)
+{
+
+	for(int cnt=0; cnt<CNTA; cnt=cnt+2 )
+	{
+		long int posIM  = tabla_calibracion[cnt];
+		long int posTEX = tabla_calibracion[cnt+1];
+
+		ImagenDisplayVector[posTEX]   = 255;
+		ImagenDisplayVector[posTEX+1] =  50;
+		ImagenDisplayVector[posTEX+2] =   0;
+		ImagenDisplayVector[posTEX+3] = 255;
+	}
+}
+
+
+/************************************************
+Selección de CAMARA
+************************************************/
+bool camara::Seleccio_CAM(void)
+{
+
+	digitalWrite( pin_7 ,  portMUX[0]);	//Selection
+	digitalWrite( pin_11,  portMUX[1]);	//Enable 1
+	digitalWrite( pin_12,  portMUX[2]);	//Enable 2
+
+}
+
+
+/************************************************
+ Procedimiento para Calibrar Display/Cámara
+************************************************/
+bool camara::CE_Calibrar (void)
+{
+
+	existeArchivo = existe(ruta_tablaCalibracion);
+
+	Seleccio_CAM();
+	cout << portMUX[0] << portMUX[1] << portMUX[2] << endl;
+	int N_Ite=4;
+
+	if(esMaster || withMUX ) {
+		//dibuixar_patro_calibracio();
+		cout << "Dibuixa patro de calibracio" << endl;
+		solicitarDibuixarPatro();
+		display->dibuixarPatroCalibracio(OFFSET_X, OFFSET_Y, escala);
+		display->dibuixar();
+	}
+	if(!esMaster) {
+		solicitarDibuixarPatro();
+	}
+	usleep(500000);
+	CE_Capturar(false);
+
+	if(!calibrada)
+	{
+		while( estadoCalibracion == quieroCalibrar )
+		//for ( int cnt_bucle=0 ; cnt_bucle<=N_Ite ; cnt_bucle++ )
+		{
+			cout << "Calibrando cámara local id: " << idCam << " -> " << ruta_homography << endl;
+			bool unaCaptura=true;
+			display->dibuixar();
+			CE_Capturar(unaCaptura);
+			guardarTest("./PatroNou", quadrat);
+			// CALCULA HOMOGRAFIA (MATRIU DE CALIBRACIO)
+			if( calcular_matriz_calibracion_inversa() )
+			{
+				estadoCalibracion = yaHeCalibrado;
+				calibrada=true;		
+				//break;
+			}
+		}
+	}
+	display->colorDisplay(0,0,0,255);
+	display->dibuixar();
+/*
+	// CALCULA LA TABLA ASSOCIADA A LA MATRIU DE CALIBRACIO (MENYS TEMPS COMPUTACIONAL)
+	if( (calibrada && recalibrar) || !existeArchivo ){
+		Calculo_Tabla_Calibracion();
+				//Calculo_Tabla_CalibracionDirecta();
+		Init_Textura();
+	}
+
+//	if(!recalibrar){
+		loadTablaCalibracion();
+//	}
+*/
+	return calibrada;
+
+}
+
+
+bool camara::CE_CalibrarRemoto (void)
+{
+	cout << "Comunicando calibracion id: " << idCam << " -> " << ruta_homography << endl;
+	dHiInv=dHi.inv();
+	//display->colorDisplay(0,0,0,255);
+	display->dibuixar();
+	// Falta la Matriz de Calibracion del plano de los C-Elegans
+	
+	return true;
+}
+
+/*******************************************************************
+	Dibuixa el patro en el display per a calcular la calibracio
+********************************************************************/
+void camara::dibuixar_patro_calibracio (void)
+{
+	float pantalla_x, pantalla_y;
+
+	BeginFrame();
+
+	int fonfo=0;
+	ILLUMINACIO (ImagenDisplayTextura, 0,0,0, NULL);
+	for(int ite=0; ite<90; ite++) //42
+	{
+		if(ite%2) //UNO SÍ UNO NO
+		{
+			pantalla_x = puntos_pantalla[ite][0]*escala +  OFFSET_X;
+			pantalla_y = puntos_pantalla[ite][1]*escala +  OFFSET_Y;
+
+			DrawPuntRect    ( ImagenDisplayTextura, pantalla_x, pantalla_y, ImagenDisplayTextura );
+			DrawTextureRect ( ImagenDisplayTextura, -1.0f, -1.0f, 1.0f, 1.0f, NULL);
+		}
+	}	
+	EndFrame();
+}
+
+
+/*******************************************************************
+ Calcular la Matriz de Calibracion Inversa entre Display y Cámara
+********************************************************************/
+bool camara::calcular_matriz_calibracion_inversa( void )
+{
+	bool found = false;
+	unsigned char* image_wb = (unsigned char*) malloc (sizeof(char)*WIDTH_FRAME*HEIGHT_FRAME);
+	memset( image_wb, 255, WIDTH_FRAME*HEIGHT_FRAME);
+
+	Size imageSize;
+
+	vector<Point2f> imagePoints;
+	vector<Point2f> displayPoints;
+
+	Size boardSize;
+	boardSize.height = 11; //7;
+	boardSize.width  = 4;  //4; //3;
+
+	float squareSize;            // The size of a square in your defined unit (point, millimeter,etc).
+	squareSize = 42*escala;
+	
+	for( int cnt=0; cnt<WIDTH_FRAME*HEIGHT_FRAME; cnt++ )
+		if( quadrat[cnt]>20 )
+			image_wb[cnt]=0;
+
+	guardarTest("./Patern", image_wb);
+
+	Mat view = Mat (Size(WIDTH_FRAME,HEIGHT_FRAME), CV_8UC1, image_wb );
+
+	if(!withMUX) {
+		loadHomographyInverseParams();
+//		loadHomographyNivelPlaca();
+	} 
+
+	if (!view.empty())
+	{
+		imageSize = view.size();  // Format input image.
+		
+		SimpleBlobDetector::Params params;
+		params.filterByArea=false;
+		params.minArea=150;
+		params.maxArea=50000;
+		params.filterByCircularity = false;
+		params.filterByInertia = false;
+		params.filterByConvexity = false;
+		cv::Ptr<cv::FeatureDetector> blobDetector = cv::SimpleBlobDetector::create(params);
+		
+		found = findCirclesGrid(view, boardSize, imagePoints, CALIB_CB_ASYMMETRIC_GRID, blobDetector);
+		for (int kk=0; kk<imagePoints.size();kk++) {
+			imagePoints.at(kk) = imagePoints.at(kk); //*3.0;
+			cout << imagePoints.at(kk) << endl;
+		}
+		
+		if (found)             
+		{
+			cout << "Patrón Encontrado!!! Calibrando... " << imagePoints.size() << " puntos" << endl;
+			// Crea Patrón
+			for (int i=0; i<boardSize.height ; i++)
+				for ( int j=0; j<boardSize.width; j++)
+					displayPoints.push_back(Point2f( OFFSET_X + (i*squareSize*texelRatio), OFFSET_Y + ( ( 2*j + i%2)*squareSize) )); // 105.191061452
+
+			// Crea la homografía
+			Mat dHiActual = findHomography(displayPoints, imagePoints);
+			double displayPointsErr = this->computeReprojectionErrorsH( displayPoints, imagePoints, dHiActual, &corregir_x, &corregir_y);
+
+			//cout << "Error Actual: " << displayPointsErr << ", Error Guardado: " << erroCalibracio << endl;
+
+			// Si el error calculado es más grande que el guardo
+			if( 1 ) //displayPointsErr > erroCalibracio)
+			{
+				cout << "Aplicar nueva calibración..." <<endl;
+				dHi=dHiActual;
+				this->saveInverseHomographyParams( imagePoints, displayPoints, dHiActual, displayPointsErr);
+
+				// Aplicar desplaçament a l'homografia per a corregir l'error sistematic 
+				/*Mat Trans = Mat::zeros( 3, 3, CV_64FC1);
+				Trans.at<double>(0,0)=1;				Trans.at<double>(0,2)= corregir_x;
+							   Trans.at<double>(1,1)= 1;	Trans.at<double>(1,2)= corregir_y;
+											Trans.at<double>(2,2)= 1;
+				dHi=Trans*dHiActual;
+				displayPointsErr = this->computeReprojectionErrorsH( displayPoints, imagePoints, dHi, &corregir_x, &corregir_y);
+				this->saveInverseHomographyParams( imagePoints, displayPoints, dHi, displayPointsErr);
+				*/
+				recalibrar=true;
+			}
+
+		}
+		else{
+			cout << "No ha calibrado!!! Cargando calibración guardada" << endl;
+			loadHomographyInverseParams();
+		}
+	}
+
+	dHiInv=dHi.inv();
+
+
+	free(image_wb);
+	return found;
+}
+
+
+/**************************************************************************************
+ * @ Convierte la Matriz de calibracion en una Tabla de Asignacion (Tabla de Calibracion)
+ * @ Lo hace para aquellos texels 
+***************************************************************************************/
+int camara::Calculo_Tabla_Calibracion ( void )
+{
+	
+	//if(recalibrar || !existeArchivo)
+	{
+		int Ancho_Pant = (int)floor(ImagenDisplayTextura->GetWidth());
+		int Alto_Pant  = (int)floor(ImagenDisplayTextura->GetHeight());
+
+		Mat punt = Mat(3, 1, CV_64FC1);
+
+		//loadHomographyInverseParams();
+
+		int cnt = 0;
+		double limiteEnY1, limiteEnY2, m1, b1;
+		if(rectas.rows>0)
+		{
+			m1 = rectas.at<double>(1,0);
+			b1 = rectas.at<double>(1,1);
+		}
+
+		// En función del Texel (del Display)
+		for(int cnt_i=0; cnt_i<Ancho_Pant; cnt_i++ )
+		{
+			for(int cnt_j=0; cnt_j<Alto_Pant; cnt_j++ )
+			{
+				punt.at<double>(0,0)= (double)cnt_i; 
+				punt.at<double>(1,0)= (double)cnt_j; 
+				punt.at<double>(2,0)= 1.0;
+
+
+				Mat punt_T = dHi*punt;
+
+				int y = (int)floor(punt_T.at<double>(0,0)/punt_T.at<double>(0,2));
+				int x = (int)floor(punt_T.at<double>(0,1)/punt_T.at<double>(0,2));
+
+				if(rectas.rows>0 && idCam==1)
+				{
+					limiteEnY1 = (int)floor(m1 * cnt_i + b1 + 5);
+					limiteEnY2 = (int)floor(m1 * cnt_i + b1);
+				}
+				if(rectas.rows>0 && idCam==2)
+				{
+					limiteEnY1 = (int)floor(m1 * cnt_i + b1 - 5);
+					limiteEnY2 = (int)floor(m1 * cnt_i + b1);
+				}
+				//else limiteEnY1=cnt_j-100;
+
+
+				if(x>=0 && x<HEIGHT_FRAME && y>=0 && y<WIDTH_FRAME && cnt_j>limiteEnY1 && idCam==1 )
+				{
+					
+					long int posIM  = x*WIDTH_FRAME + y;
+					long int posTEX = (cnt_j*floor(Ancho_Pant) + cnt_i)*4;
+
+					tabla_calibracion[cnt]   = posIM;
+					tabla_calibracion[cnt+1] = posTEX;
+
+					cnt=cnt+2;
+				}
+				if(x>=0 && x<HEIGHT_FRAME && y>=0 && y<WIDTH_FRAME && cnt_j<=limiteEnY1 && cnt_j>=limiteEnY2 && idCam==1 )
+				{
+					long int posTEX = (cnt_j*floor(Ancho_Pant) + cnt_i)*4;
+					detectadaInterseccion[posTEX] = 1;
+				}
+
+
+				if(x>=0 && x<HEIGHT_FRAME && y>=0 && y<WIDTH_FRAME && cnt_j<limiteEnY1 && idCam==2 )
+				{
+				
+					long int posIM  = x*WIDTH_FRAME + y;
+					long int posTEX = (cnt_j*floor(Ancho_Pant) + cnt_i)*4;
+
+					tabla_calibracion[cnt]   = posIM;
+					tabla_calibracion[cnt+1] = posTEX;
+
+					cnt=cnt+2;
+				}
+
+				if(x>=0 && x<HEIGHT_FRAME && y>=0 && y<WIDTH_FRAME && cnt_j>=limiteEnY1 && cnt_j<=limiteEnY2 && idCam==2 ) //&& cnt_j>limiteEnY2
+				{
+					long int posTEX = (cnt_j*floor(Ancho_Pant) + cnt_i)*4;
+					detectadaInterseccion[posTEX] = 1;
+				}
+			}
+		}
+
+		CNTA = cnt;
+		cout << "Tabla construida con tamaño: " << CNTA << " Bytes" << endl;
+		saveTablaCalibracion();
+
+		return cnt;
+	}
+}
+
+int camara::Calculo_Tabla_Calibracion ( bool monoCamara )
+{
+	
+	//if(recalibrar || !existeArchivo)
+	{
+		int Ancho_Pant = (int)floor(ImagenDisplayTextura->GetWidth());
+		int Alto_Pant  = (int)floor(ImagenDisplayTextura->GetHeight());
+
+		Mat punt = Mat(3, 1, CV_64FC1);
+
+		//loadHomographyInverseParams();
+
+		int cnt = 0;
+
+
+		// En función del Texel (del Display)
+		for(int cnt_i=0; cnt_i<Ancho_Pant; cnt_i++ )
+		{
+			for(int cnt_j=0; cnt_j<Alto_Pant; cnt_j++ )
+			{
+				punt.at<double>(0,0)= (double)cnt_i; 
+				punt.at<double>(1,0)= (double)cnt_j; 
+				punt.at<double>(2,0)= 1.0;
+
+				Mat punt_T = dHi*punt;
+
+				int y = (int)floor(punt_T.at<double>(0,0)/punt_T.at<double>(0,2));
+				int x = (int)floor(punt_T.at<double>(0,1)/punt_T.at<double>(0,2));
+
+				if(x>=0 && x<HEIGHT_FRAME && y>=0 && y<WIDTH_FRAME )
+				{	
+					long int posIM  = x*WIDTH_FRAME + y;
+					long int posTEX = (cnt_j*floor(Ancho_Pant) + cnt_i)*4;
+
+					tabla_calibracion[cnt]   = posIM;
+					tabla_calibracion[cnt+1] = posTEX;
+
+					cnt=cnt+2;
+				}
+				
+			}
+		}
+
+		CNTA = cnt;
+		cout << "Tabla construida con tamaño: " << CNTA << " Bytes" << endl;
+		saveTablaCalibracion();
+
+		return cnt;
+	}
+}
+
+/************************************************************************
+Calculo tabla de Fusion 2 CAM
+*************************************************************************/
+int camara::calculo_Tabla_Fusionada_Parcial ( unsigned char* detectada, Point2f centroImagen )
+{
+
+	int AnchoOrigen = WIDTH_FRAME;
+	int AltoOrigen  = HEIGHT_FRAME;
+
+	int AnchoFusion = 2592;
+	int AltoFusion  = 2592;
+
+	cout << "Creando tabla de Fusión Parcial: " << idCam << "... (para 2 cámaras)" << endl;
+	
+
+	double limiteEnY1=0, limiteEnY2=0;
+	long int cnt = 0;
+	long int posIM, posFus;
+	Point2f puntImageFloat;
+
+	double m1, b1;
+	tamFusionadaParcial=0;
+
+	m1=getM(0);
+	b1=getB(0);
+
+	tamInterseccionParcial=0;
+
+	Point2f centro = Px(centroImagen.x,centroImagen.y);
+	cout << "Centro de la imagen en Cámara: " << centro << endl; 
+	if(rectas.rows>0 && idCam==1)
+	{		
+		limiteEnY1 = (int)floor(centro.y) + 70;
+		limiteEnY2 = (int)floor(centro.y) - 70;
+	}
+	if(rectas.rows>0 && idCam==2)
+	{
+		limiteEnY1 = (int)floor(centro.y) - 70;
+		limiteEnY2 = (int)floor(centro.y) + 70;
+	}
+
+	minimIdx = 10000000;
+	maximIdx = 0;
+	int idxMin=0, idxMax=0;	
+
+	for(int FusionadaX=0; FusionadaX<AnchoFusion; FusionadaX++ )
+	{
+		for(int FusionadaY=0; FusionadaY<AltoFusion; FusionadaY++ )
+		{
+			puntImageFloat = Inv_GxPx((double)FusionadaX,(double)FusionadaY);
+			Point2i puntImage;
+			puntImage.x = (int)floor(puntImageFloat.x);
+			puntImage.y = (int)floor(puntImageFloat.y);
+
+			if(puntImage.x>=0 && puntImage.x<AnchoOrigen && puntImage.y>=0 && puntImage.y<AltoOrigen)
+			{
+				posFus = FusionadaY  *AnchoFusion + FusionadaX;
+				posIM  = puntImage.y *AnchoOrigen + puntImage.x;
+ 
+				if( idCam == 1 ) 
+				{
+					if( puntImage.y>=limiteEnY1 )
+					{
+						tablaFusionadaParcial [tamFusionadaParcial]   =  posIM;
+						tablaFusionadaParcial [tamFusionadaParcial+1] =  posFus;
+						tamFusionadaParcial = tamFusionadaParcial+2;
+					}
+					// Detectada Intersección
+					if ( puntImage.y<limiteEnY1 && puntImage.y>limiteEnY2 )
+					{
+						//Crear_Tabla_Interseccion_Parcial
+						tablaInterseccionParcial_C [tamInterseccionParcial] = posIM;
+						tablaInterseccionParcial   [tamInterseccionParcial] = posFus;
+						if( posFus < minimIdx )
+						{
+							minimIdx = posFus;
+							idxMin   = tamInterseccionParcial;
+						}
+						if( posFus > maximIdx )
+						{
+							maximIdx = posFus;
+							idxMax   = tamInterseccionParcial;
+						} 
+						tamInterseccionParcial++;
+					}
+							
+				}
+				if( idCam == 2 )
+				{
+					if( puntImage.y<=limiteEnY1 ) //puntImage.y<limiteEnY1
+					{
+						tablaFusionadaParcial [tamFusionadaParcial+0]  =  posIM;
+						tablaFusionadaParcial [tamFusionadaParcial+1]  =  posFus;
+						tamFusionadaParcial = tamFusionadaParcial+2;
+					}
+					// Detectada Intersección
+					if ( puntImage.y>limiteEnY1 && puntImage.y<limiteEnY2 )
+					{
+						//Crear_Tabla_Interseccion_Parcial
+						tablaInterseccionParcial_C [tamInterseccionParcial] = posIM;
+						tablaInterseccionParcial   [tamInterseccionParcial] = posFus;
+						if( posFus < minimIdx )
+						{
+							minimIdx = posFus;
+							idxMin   = tamInterseccionParcial;
+						}
+						if( posFus > maximIdx )
+						{
+							maximIdx = posFus;
+							idxMax   = tamInterseccionParcial;
+						} 
+						tamInterseccionParcial++;
+					}	
+				}
+			}
+		}
+	}
+
+	FYmin = (int)floor(minimIdx/2592.0);
+	FYmax = (int)floor(maximIdx/2592.0);
+
+	cout << "·" << idxMin << "-> minim: " << minimIdx << " | ·" << idxMax << "-> maxim: " << maximIdx << endl;
+	tablaFusionadaParcial_Calculada = true;
+	tablaInterseccionParcial_Calculada=true;
+	cout << "pixelesConvert Iterseccion Parcial: " << tamFusionadaParcial << endl;
+	
+	return tamFusionadaParcial;
+}
+
+
+/*
+* @ Fusiona la imagen de una sola cámara en una Imagen Mayor
+* @ También comprime la fusionada para poder enviarla al servidor
+* @ La fusionada de la cámara principal además añade a la misma la Intersección
+*/
+void camara::fussioParcial (unsigned char* imagen, bool grava)
+{
+	memset(imagen, 255, 2592*2592);
+
+	cout << "Fusionando " << idCam << " Individualmente... " << endl;
+	int contador=0;
+
+	for(long long int cnt=0; cnt<tamFusionadaParcial; cnt=cnt+2 )
+	{
+		long int posIM  =   tablaFusionadaParcial[cnt];
+		long int posImFus = tablaFusionadaParcial[cnt+1];
+
+		imagen[posImFus] 	= quadrat[posIM];
+		imageParcial[contador]  = quadrat[posIM];
+		contador++;
+	}
+
+
+	if(grava) {
+
+		char rutaIm1[100]="./Im1.bmp";
+		Mat Im1(Size(2592, 1944), CV_8UC1, quadrat);
+		imwrite( rutaIm1, Im1);
+
+		char rutaIm[100]="./fusionadaParcial.bmp";
+		Mat dig1(Size(2592, 2592), CV_8UC1, imagen);
+		imwrite( rutaIm, dig1);
+	}
+
+}
+
+/*
+* @ Según lo anterior (la fusión) esta función añade la Intersección a la misma
+* @ 
+*
+*/
+void camara::enviarInterseccioReconstruida ( unsigned char* imageParcialEnInterseccio, int anticFi  )
+{
+	//Comprimir Interseccio per a enviar al Servidor
+	int contador = (int)floor(anticFi/2.0);
+
+	for(long int cnt=anticFi; cnt<tamFusionadaParcial; cnt=cnt+2 )
+	{
+		long int posFUS		= tablaFusionadaParcial[cnt+1]; 	// tablaCompuestaParcial[cnt];
+		imageParcial[contador]  = imageParcialEnInterseccio[posFUS]; 	// quadrat[posIM];
+		contador++;
+	}
+
+}
+
+/*
+ * @ Comprime la intersección Parcial
+ * @ a partir de la tabla calculada
+*/
+void camara::fussioInterseccioParcial (unsigned char* imagen)
+{
+	//cout << "Tamaño INTERSECCION ---> " << tamInterseccionParcial << endl;
+
+	for (int cont=0; cont < tamInterseccionParcial ; cont++ )
+	{
+		long int posFus = tablaInterseccionParcial   [cont];
+		long int posIm  = tablaInterseccionParcial_C [cont];
+		imageInterseccioParcial[cont] = quadrat[posIm]; 
+	}
+
+}
+
+
+/*
+*
+*
+*/
+void camara::procesarInterseccionParcial(bool grava)
+{
+	if((FYmax-FYmin)>0) {
+		memset(imagenPROVA, 255, sizeof(char)*2592*(FYmax-FYmin) );
+		
+		int diferencia = minimIdx % 2592;
+
+		for (int cont=0; cont < tamInterseccionParcial ; cont++ )
+		{
+			long int posFus = tablaInterseccionParcial[cont];
+			imagenPROVA[posFus-minimIdx+diferencia] = imageInterseccioParcial[cont];
+		}
+		
+		//cout << "Mija de l'image: " << media/tamInterseccionParcial << endl;
+		char rutaImGray[100]="";
+		if(idCam==1) strcat(rutaImGray,"./InterseccionGray1.bmp" );
+		if(idCam==2) strcat(rutaImGray,"./InterseccionGray2.bmp" );
+		char rutaImGrayAux[100]="";
+		if(idCam==1) strcat(rutaImGrayAux,"./InterseccionGrayAux1.bmp" );
+		if(idCam==2) strcat(rutaImGrayAux,"./InterseccionGrayAux2.bmp" );
+
+		// Reconstruida en Grisos
+		Mat dig1(Size(2592, (FYmax-FYmin) ), CV_8UC1, imagenPROVA);
+		Mat grisaux;
+		dig1.copyTo(grisaux);
+		dig1.copyTo(interseccioGrisos);
+
+
+		if(grava) {
+			// Dibuixa Circul del centro i llinia divisoria
+			Point2i centroIm(1296, (int)round((FYmax-FYmin)/2.0) );
+			Point2i pt1(0, (int)round((FYmax-FYmin)/2.0)), pt2(2592, (int)round((FYmax-FYmin)/2.0));
+			int thickness=2, lineType=8, shift=0;
+			line( grisaux, pt1, pt2, Scalar(255), thickness, lineType, shift );
+			circle ( grisaux, centroIm, 10, Scalar(255), 4, 8, 0 );
+			imwrite( rutaImGrayAux, grisaux);
+		}
+
+		// Binarisada
+		for (int cont=0; cont < 2592*(FYmax-FYmin) ; cont++ ) {
+			if(imagenPROVA[cont]<=34) {
+				imagenPROVA[cont] = 0; 
+			}
+			else {
+				imagenPROVA[cont] = 255;
+			}
+		}
+		Mat processada(Size(2592, (FYmax-FYmin) ), CV_8UC1, imagenPROVA);
+
+		//detectarObjecto(&dig1, &dig1, grava);
+
+
+		char rutaIm[100]="";
+		if(idCam==1) strcat(rutaIm,"./Interseccion1.bmp" );
+		if(idCam==2) strcat(rutaIm,"./Interseccion2.bmp" );
+		//binarisar ( processada, processada, grava);
+		if(grava) {
+			imwrite( rutaIm, processada);
+		}
+		thresh_callback(processada, processada, interseccioGrisos, grava);
+
+		if(grava) {
+			imwrite( rutaImGray, interseccioGrisos);
+		}
+		//imshow(nameWin, dig1);
+
+		//usleep(1000000);
+	}
+}
+
+
+void camara::binarisar ( Mat &image_binarisada, Mat &image_grey, bool grava)
+{
+	int blockSize=11;
+	double C = 3.0;
+	double maxValue=255.0; 
+	adaptiveThreshold(image_grey, image_binarisada, maxValue, ADAPTIVE_THRESH_GAUSSIAN_C, THRESH_BINARY, blockSize, C );
+}
+
+
+bool camara::detectarObjecto (Mat *imageOut, Mat *imageIn, bool grava)
+{
+
+	// Setup SimpleBlobDetector parameters.
+	SimpleBlobDetector::Params params;
+
+	// Change thresholds
+	params.minThreshold = 10;
+	params.maxThreshold = 200;
+
+	// Filter by Area.
+	params.filterByArea = true;
+	params.minArea = 30;   //30
+	params.maxArea = 600;  //600
+
+	// Filter by Circularity
+	params.filterByCircularity = false;
+	params.minCircularity = 0.001;
+
+	// Filter by Convexity
+	params.filterByConvexity = false;
+	params.minConvexity = 0.001;
+
+	// Filter by Inertia
+	params.filterByInertia = false;
+	params.minInertiaRatio = 0.001;
+
+
+	// Storage for blobs
+	vector<KeyPoint> keypoints;
+
+	#if CV_MAJOR_VERSION < 3   // If you are using OpenCV 2
+		// Set up detector with params
+		SimpleBlobDetector detector(params);
+		// Detect blobs
+		detector.detect( *imageIn, keypoints);
+	#else 
+		// Set up detector with params
+		Ptr<SimpleBlobDetector> detector = SimpleBlobDetector::create(params);   
+		// Detect blobs
+		detector->detect( *imageIn, keypoints);
+	#endif 
+
+
+	if(!keypoints.empty())
+	{
+		objectes.clear();
+
+		// Draw detected blobs as red circles.
+		// DrawMatchesFlags::DRAW_RICH_KEYPOINTS flag ensures
+		// the size of the circle corresponds to the size of blob
+		Mat im_with_keypoints;
+		drawKeypoints( *imageIn, keypoints, im_with_keypoints, Scalar(0,0,255), DrawMatchesFlags::DRAW_RICH_KEYPOINTS );
+
+
+		if(idCam==1 && grava) imwrite( "./Objecte1.bmp", im_with_keypoints); 
+		if(idCam==2 && grava) imwrite( "./Objecte2.bmp", im_with_keypoints);
+
+		// Crear una lista con objetos (posibles CElegans) 
+		cout << "Objetos: " << keypoints.size() << endl;
+		for (int iO=0; iO<(int)keypoints.size(); iO++  ) {
+			//cout << "-" << idCam <<" Objeto " << iO << ": " << keypoints[iO].pt << endl;
+			objetos objecte(keypoints[iO].pt);
+			objectes.push_back( objecte );
+		}
+		
+		im_with_keypoints.release();
+	}
+}
+
+
+void camara::thresh_callback( Mat &image_output , Mat &threshold_output, Mat &imageGrisos , bool grava )
+{
+	//int thresh = 100;
+	//int max_thresh = 255;
+	int eix = (int)round((float)(FYmax-FYmin)/2.0);
+	RNG rng(12345);
+
+	//Mat threshold_output;
+	vector<vector<Point> > contours;
+	vector<Vec4i> hierarchy;
+
+	/// Detect edges using Threshold
+	//threshold( src_gray, threshold_output, thresh, 255, THRESH_BINARY );
+	/// Find contours
+	findContours( threshold_output, contours, hierarchy, RETR_TREE, CHAIN_APPROX_SIMPLE, Point(0, 0) );
+
+	/// Approximate contours to polygons + get bounding rects and circles
+	vector<vector<Point> > contours_poly( contours.size() );
+	vector<Rect> boundRect	( contours.size() );
+	vector<Point2f>center	( contours.size() );
+	vector<float>radius	( contours.size() );
+
+	objectes.clear();
+	objectes.reserve(10000);
+
+	cout << "Blobs detectados: " << contours.size() << endl;
+	for( int i = 0; i < contours.size(); i++ )
+	{
+		approxPolyDP( Mat(contours[i]), contours_poly[i], 3, true );
+		boundRect[i] = boundingRect( Mat(contours_poly[i]) );
+		minEnclosingCircle( (Mat)contours_poly[i], center[i], radius[i] );
+
+		// Almacena objetos candidatos a ser CElegans
+		int xbox = boundRect[i].br().x - boundRect[i].tl().x;
+		int ybox = boundRect[i].br().y - boundRect[i].tl().y;
+
+		// Seleccionar els possibles CElegans
+		if   (	contours[i].size()>5 && contours[i].size()<600 &&
+			xbox>1 && xbox<600 && ybox>1 && ybox<600 )
+		{
+			objetos objecte( center[i], contours[i], boundRect[i], radius[i], FYmin );
+			objecte.addPixels(imageGrisos); //, 30
+			if( objecte.talla(eix) ) {
+				objectes.push_back (objecte);
+			}
+		}
+	}
+
+
+	// Dibuixar Contorns
+	Mat drawing = Mat::zeros( threshold_output.size(), CV_8UC3 );
+	for( int i = 0; i< contours.size(); i++ ) {
+		/// Draw polygonal contour
+		Scalar color = Scalar( 255, 255, 255 );
+		drawContours( drawing, contours_poly, i, color, 1, 8, vector<Vec4i>(), 0, Point() );
+	}
+
+
+	//cout << "Objetos detectados: " << objectes.size() << endl;
+	if(objectes.size()>0) {
+		///bonding rects + circles
+		for( int i = 0; i< objectes.size(); i++ ) {
+			Scalar color = Scalar( rng.uniform(0, 255), rng.uniform(0,255), rng.uniform(0,255) );
+
+			rectangle	( drawing, objectes[i].boundRect().tl()	 , objectes[i].boundRect().br()	, color, 1, 8, 0 );
+			circle		( drawing, objectes[i].centroide()	 , (int)objectes[i].radius()	, color, 1, 8, 0 );
+			double fontScale = 1.0;
+			char str[10]="";
+			sprintf(str,"%i",i);
+			putText		( drawing, str, objectes[i].centroide(), 1, FONT_HERSHEY_PLAIN, Scalar(0,255,255), 1, 8, false );
+		}
+
+		if(idCam==1 && grava) imwrite( "./ObjecteContourns1.bmp", drawing); 
+		if(idCam==2 && grava) imwrite( "./ObjecteContourns2.bmp", drawing);
+	}
+
+	/// Show in a window
+	//namedWindow( "Contours", CV_WINDOW_AUTOSIZE );
+	//imshow( "Contours", drawing );
+}
+
+
+/*
+*
+* Crear la tabla de intersección en función de Texel, a nivel individualizado (por cámara)
+* 
+*/
+void camara::crear_TablaInterseccion ( int idxTexel, int idxImage, int cntCam)
+{
+	tablaInterseccionIndividual [cntCam +0] = (long int)idxTexel;
+	tablaInterseccionIndividual [cntCam +1] = (long int)idxImage;
+
+	//cout << cntCam +1 << " · posIm: " << tablaInterseccionIndividual[cntCam +1] << endl;
+
+	if ( cntCam >= tamInterseccio )
+		tamInterseccio = cntCam+1;
+
+	//cout << "Total: "<< cntCam << endl;
+}
+
+
+void camara::leer_TablaInterseccion ( )
+{
+	for(int cnt=0; cnt < tamInterseccio; cnt=cnt+1)
+	{
+		//tablaInterseccionIndividual[cntCam +0] = idxTexel;
+		long int idxImage = tablaInterseccionIndividual[cnt +1] ;
+
+		cout << cnt +1 << " · posIm: " << idxImage << endl;
+	}
+
+}
+
+/*
+*
+* Guardar tabla de Intersecion
+*
+*/
+void camara::save_TablaInterseccion()
+{
+
+
+	FILE *f = fopen( ruta_tablaInterseccion,"w");
+
+	if (f == 0) 
+		printf("*No he pogut obrir %s\n", ruta_tablaInterseccion );
+	else
+	{
+		fwrite( tablaInterseccionIndividual, sizeof(int), tamInterseccio , f);
+		fclose(f);
+	}
+	
+}
+
+
+/*
+Cargar tabla de calibración
+*/
+bool camara::load_TablaInterseccion (void)
+{
+	
+	FILE * pFile;
+	long lSize;
+		
+	size_t result;
+
+	if((pFile = fopen ( ruta_tablaInterseccion , "rb" ))!=NULL) //dir_rep
+	{
+
+		if (pFile==NULL) {fputs ("File error",stderr); }
+
+		fseek (pFile , 0 , SEEK_END);
+		lSize = ftell (pFile);
+		rewind (pFile);
+
+		if (tabla_calibracion == NULL) {fputs ("Memory error!!!! ",stderr); }
+
+		result = fread ( tablaInterseccionIndividual, sizeof(int), lSize, pFile);	
+	}
+	else
+	{
+		cout << "No hay archivo" << endl;
+		return false;
+	}
+	free (pFile);
+
+	tamInterseccio = lSize/sizeof(int);
+
+	cout << "CARGANDO TABLA NUEVA: " << ruta_tablaInterseccion << " Tam: " << tamInterseccio << endl;
+
+	return true;
+
+}
+
+/**************************************************************************************
+ Convierte la Matriz de calibracion en una Tabla de Asignacion (Tabla de Calibracion)
+***************************************************************************************/
+/*
+int camara::Calculo_Tabla_CalibracionDirecta ( void )
+{
+	int Ancho_Pant = (int)floor(ImagenDisplayTextura->GetWidth());
+	int Alto_Pant  = ImagenDisplayTextura->GetHeight();
+
+	Mat punt = Mat(Size(1, 3), CV_64FC1, Scalar(0,0,1));
+
+
+	//Mat dHi;
+	loadHomographyInverseParams();
+	cout << "dHi = " << dHi << endl;
+	dHiInv=dHi.inv();
+
+	int posTEX = 0;
+	
+	for(int cnt_i=0; cnt_i<1944; cnt_i++ )
+	{
+		for(int cnt_j=0; cnt_j<1944; cnt_j++ )
+		{
+			punt.at<double>(0,0)=  cnt_i;
+			punt.at<double>(0,1)=  cnt_j;
+			punt.at<double>(0,2)=    1.0;
+
+			Mat punt_T = dHiInv*punt;
+			int y = (int)(punt_T.at<double>(0,0)/punt_T.at<double>(0,2));
+			int x = (int)(punt_T.at<double>(0,1)/punt_T.at<double>(0,2));
+
+			if(x>=0 && x<Ancho_Pant && y>=0 && y<Alto_Pant)
+			{
+				long int posIM = (y*floor(Ancho_Pant) + x);
+				tabla_calibracionDirecta[posTEX] = posIM;
+				//cout << x << ", " << y << " = " << posTEX << endl;
+				posTEX++;	
+			}		
+		}
+	}
+
+	cout << posTEX << endl;
+
+	return posTEX;
+}
+
+*/
+/************************************************
+ Captura imagen
+************************************************/
+bool camara::CE_Capturar ( bool unaCaptura )
+{
+	const void* frame_data; int frame_sz;
+
+	// Si NO tiene Multiplexor coge solo una imagen
+	if( !withMUX || unaCaptura)
+	{
+		while( !cam->BeginReadFrame(0,frame_data,frame_sz) ) {};			
+		cam->EndReadFrame(0);
+		//cout << "Una captura" << endl;
+	}
+	// Si tiene Multiplexor toma más de una imagen
+	else if( withMUX ) 
+	{
+		Seleccio_CAM();
+		struct timespec t0 = Inicia_Temporisador();
+
+		float TEMPS=0.0;
+		//for(int k=0; k<4; k++)
+		//while (TEMPS<0.4) {
+			StopCamera();
+			cam = StartCamera( WIDTH_HD, HEIGHT_HD, 7,1,false );
+			while(!cam->BeginReadFrame(0,frame_data,frame_sz)) {}		
+			cam->EndReadFrame(0);
+			TEMPS = Medix_temps(t0);
+		//}
+
+		cout << "Varias capturas: " <<  TEMPS << " segundos" << endl;
+	}
+
+
+	if(WIDTH_HD==WIDTH_FRAME) {
+		//cout << "Tam Image: " << frame_sz << endl;
+		memcpy(quadrat,(unsigned char*)frame_data, frame_sz );
+	}
+	else {  
+		QUADRAT (quadrat, (unsigned char*)frame_data);
+	}
+
+	if(MODO_ENFOQUE)
+	{
+		//Mat dig1( Size(WIDTH_FRAME, HEIGHT_FRAME), CV_8UC1, quadrat);
+		//imshow(nameWin, dig1);
+		//waitKey(15);
+	}
+
+
+	//guardarTest("./Im", quadrat);
+	//guardarTest("./Im", quadrat, CV_8UC1, WIDTH_FRAME, HEIGHT_FRAME );
+	
+}
+
+
+/**********************************************************************
+Calculo de Error de Compensacion
+***********************************************************************/
+// Llama a la función calcular error compensación y crea un archivo
+bool camara::CE_Error_Compensacion (void)
+{
+/*
+	if(CNTA)
+	{
+		//float error = this->Calcular_Error_Compensacion();
+		float error = this->Calcular_Luz_Media();
+		cout << "Media " << idSV << ": " << error << endl;
+
+		if(idSV==1) ficherEstudiBateriaMatlab1 << error << ", " << endl;
+		if(idSV==2) ficherEstudiBateriaMatlab2 << error << ", " << endl;
+
+		char buf[80];
+		time_t rawtime;
+		struct tm *timeinfo;
+		time(&rawtime);
+		timeinfo = localtime(&rawtime);
+		strftime(buf, sizeof(buf), "%X", timeinfo);
+		//Hora_Actual(buf);
+
+		if(idSV==1) ficherEstudiBateria1 << buf << ", " << error << endl;
+		if(idSV==2) ficherEstudiBateria2 << buf << ", " << error << endl;
+	}*/
+}
+
+
+// Calcula el error de compensación 
+float camara::Calcular_Error_Compensacion ( void )
+{
+	long int error_total=0;
+	int N= CNTA/2;
+
+	for( int cnt=0 ; cnt < CNTA ; cnt=cnt+2 ) 
+	{
+		long int posIM  = tabla_calibracion[cnt];
+		error_total = error_total + abs ( 48-quadrat[posIM] );
+	}
+
+	float Mija_error = (float)(  (double)error_total/(double)N );
+
+	return Mija_error;
+}
+
+
+
+/************************************************
+Calcula intensidad de luz meddia
+************************************************/
+float camara::Calcular_Luz_Media ( void )
+{
+	long int total=0;
+	int N= CNTA/2;
+
+	for( int cnt=0 ; cnt < CNTA ; cnt=cnt+2 ) 
+	{
+		long int posIM  = tabla_calibracion[cnt];
+		total += quadrat[posIM];
+	}
+
+	float Mija = (float)(  (double)total/(double)N );
+
+	return Mija;
+}
+
+
+/************************************************
+Compensa la iluminación del Display
+************************************************/
+bool camara::CE_Compensar ( void )
+{
+
+	// UNA VOLTA CALCULADA LA TABLA COMPENSA D'UNA FORMA MES EFICIENT
+	if(CNTA)
+        	TransformarImagen_Y_CompensarDisplay();
+
+	//guardarTest("./Text", ImagenDisplayVector, CV_8UC4, (int)floor(ImagenDisplayTextura->GetWidth()), ImagenDisplayTextura->GetHeight() );
+	Sum_It_Comp();
+}
+
+
+/************************************************
+Compensa Rápido la iluminación del Display
+*****

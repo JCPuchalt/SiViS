@@ -1,0 +1,2103 @@
+#pragma once
+
+#include "../biopolis/llibreries/llibreries.hpp"
+
+// ERROR MEDIO GLOBAL EN LA COMPENSACION DEL DISPLAY DE CADA UNO DE LOS PIXELS
+float error_compensacion_rapit (unsigned char* image, unsigned char* patro_circul, int ample, int alt,  float referencia, ofstream& archiu_error, int iteracion)
+{
+	float error = 0.0;
+	int N=0;
+	int tamany = ample*alt;
+	float x0 = ample/2, y0 = alt/2;
+	int MODA[255];
+	for(int i=0; i<255; i++) MODA[i]=0;
+	int moda = 0, max=0;
+	float max_error=0;
+
+	for(int cnt=0; cnt<tamany; cnt++)
+	{
+		if(patro_circul[4*cnt]==255)
+		{	
+			float error_i = (float)abs(image[cnt]-referencia);
+			error+=error_i;
+			MODA[(int)floor(error_i)]++;
+			if(error_i>max_error)
+			{
+				max_error = error_i;
+			}
+			N++;
+		}
+
+	}
+	error = error/N;
+
+	for(int i=0; i<255; i++)
+		if(MODA[i]>max)
+		{
+			moda=i;
+			max=MODA[i];
+		}
+	
+	float frequencia = (float)max/(float)tamany;
+	if(archiu_error)
+	{
+		if (archiu_error.is_open())
+			archiu_error << iteracion << ". " << error << ", " << moda << ", " << frequencia << ", " << max_error << endl; 
+	}
+	return error;
+}
+
+// ERROR MEDIO GLOBAL EN LA COMPENSACION DEL DISPLAY DE CADA UNO DE LOS PIXELS
+float error_compensacion(unsigned char* image, int ample, int alt,  float referencia, ofstream& archiu_error)
+{
+	float error_int = 0.0, error_ext = 0.0;
+	int N_int=0, N_ext=0;
+	int tamany = ample*alt;
+	float x0 = ample/2, y0 = alt/2;
+	int R_int = pow(700/2, 2);
+	int R_ext = pow(972/2, 2);
+
+	for(int cnt=0; cnt<tamany; cnt++)
+	{
+		float y = floor(cnt/ample);
+		float x = cnt - (y*ample);
+		float r = pow(x-x0,2) + pow(y-y0,2);
+
+		if(r<R_int) //CIRCUL INTERIOR r<R_int
+		{
+			float error_i = (float)abs(image[cnt]-referencia);
+			error_int+=error_i;
+			N_int++;
+		}
+		if(r<R_ext && r>R_int) //CIRCUL EXTERIOR r<R_ext && r>R_int
+		{
+			float error_i = (float)abs(image[cnt]-referencia);
+			error_ext+=error_i;
+			N_ext++;
+		}
+	}
+	error_int = error_int/N_int;
+	error_ext = error_ext/N_ext;
+
+	if(archiu_error)
+	{
+		if (archiu_error.is_open())
+			archiu_error << error_int   << ", " << error_ext   << endl; 
+	}
+	return error_int;
+}
+
+// SEGMENTA LA IMAGEN EN BW, Y ENCUENTRA EL CENTROIDE DE TODOS LOS PUNTOS EN BLANCO
+void find_white_pixels(unsigned char* image, int ample, int alt, ofstream& centroide, ofstream& punt_image, float pantalla_x, float pantalla_y)
+{
+
+	float error_x = 0.0, error_y = 0.0;
+	float yt=0.0, xt=0.0, N=0.0, Centro_x, Centro_y;
+	int tamany = ample*alt;
+
+	for(int cnt=0; cnt<tamany; cnt++)
+	{	//UMBRAL 20
+		if(image[cnt]> 20)
+		{
+			image[cnt]=255;
+			float y = floor(cnt/ample);
+			float x = cnt - (y*ample);
+			yt+=y;
+			xt+=x;
+			N++;
+		}
+		else image[cnt]=0;
+	}
+	if(N!=0)
+	{	//CALCULA CENTROIDE
+		Centro_x = floor(xt/N);
+		error_x  = Centro_x - (float)pantalla_x;
+		Centro_y = floor(yt/N);
+		error_y  = Centro_y - (float)pantalla_y;
+	}
+
+
+	if(Centro_x>0 && Centro_x<1944 && Centro_y>0 && Centro_y<1944)
+	{
+		if (centroide.is_open())
+			centroide << "[" << Centro_x   << " " << Centro_y   << " 1]' " << endl; 
+				//  << error_x    << ", " << error_y    << endl;
+		else cout << "Unable to open file";
+
+
+		if (punt_image.is_open())
+			punt_image << "[" << pantalla_x << " " << pantalla_y << " 1]' " << endl;
+		else cout << "Unable to open file";
+	}
+	
+}
+
+
+// CONTROL PROPORCIONAL DE ERROR
+void compensar_CPU(unsigned char* image_actual, unsigned char* image_auxiliar, unsigned char* mostrar)
+{
+	int cnt1=0, error, col_global;
+
+	for(int cnt=0; cnt<1944*1944 ; cnt++)
+	{
+		error = (int)(floor(200*(48 - image_actual[cnt])));
+
+		col_global= image_auxiliar[cnt1] + image_auxiliar[cnt1+1] + image_auxiliar[cnt1+2] + error;
+			
+		mostrar[cnt1]  =col_global;
+		mostrar[cnt1+1]=col_global-255;
+		mostrar[cnt1+2]=col_global-510;
+		mostrar[cnt1+3]= 255;
+			
+		if (col_global-510<0)   image_auxiliar[cnt1+2]=0;
+		if (col_global-255<0)   image_auxiliar[cnt1+1]=0;
+		if (col_global<0)       image_auxiliar[cnt1]  =0;
+		if (col_global-510>255) image_auxiliar[cnt1+2]=255;
+		if (col_global-255>255) image_auxiliar[cnt1+1]=255;
+		if (col_global>255)     image_auxiliar[cnt1]  =255;
+
+		cnt1=cnt1+4;
+	}
+}
+
+
+int Calcul_Matriu_Transformacio_CPU_Vector (unsigned char* vector_pantalla, GfxTexture* mostrar_tex, int* tabla_calibracion,  int SV_Id )
+{
+	int Ancho_Pant = mostrar_tex->GetWidth();
+	int Alto_Pant  = mostrar_tex->GetHeight();
+
+	Mat mat_pantalla = Mat (Size(1944,1944), CV_8UC4, vector_pantalla );
+	Mat mat_mostrar_text ( Size(Ancho_Pant,Alto_Pant) ,  CV_8UC4, Scalar(255,127,0,255));
+
+	Mat punt = Mat(Size(1, 3), CV_64FC1, Scalar(0,0,1));
+
+	int fin_i = mostrar_tex->GetWidth();
+	int fin_j = mostrar_tex->GetHeight();
+
+	Mat dHi;
+	loadHomographyInverseParams(dHi, SV_Id);
+	cout << "dHi = " << dHi << endl; 
+
+	int cnt = 0;
+	for(int cnt_i=0; cnt_i<fin_i; cnt_i++ )
+	{
+		for(int cnt_j=0; cnt_j<fin_j; cnt_j++ )
+		{
+			punt.at<double>(0,0)= cnt_i;
+			punt.at<double>(0,1)= cnt_j;
+			punt.at<double>(0,2)= 1.0;
+
+			Mat punt_T = dHi*punt;
+			int y = (int)(punt_T.at<double>(0,0)/punt_T.at<double>(0,2));
+			int x = (int)(punt_T.at<double>(0,1)/punt_T.at<double>(0,2));
+
+			if(x>=0 && x<1944 && y>=0 && y<1944)
+			{
+				mat_mostrar_text.at<Vec4b>(cnt_i,cnt_j)[0]= mat_pantalla.at<Vec4b>(x,y)[0];
+				mat_mostrar_text.at<Vec4b>(cnt_i,cnt_j)[1]= mat_pantalla.at<Vec4b>(x,y)[1];
+				mat_mostrar_text.at<Vec4b>(cnt_i,cnt_j)[2]= mat_pantalla.at<Vec4b>(x,y)[2];
+				mat_mostrar_text.at<Vec4b>(cnt_i,cnt_j)[3]= mat_pantalla.at<Vec4b>(x,y)[3];
+			
+				int posIM  =      x*1944 + y;
+				int posTEX = (cnt_i*fin_i + cnt_j)*4;
+				tabla_calibracion[cnt] = posIM;
+				tabla_calibracion[cnt+1] = posTEX;
+				cnt=cnt+2;	
+			}		
+		}
+	}
+
+	mat2textUC( mat_mostrar_text, mostrar_tex);
+
+	return cnt;
+}
+
+int Calcul_Matriu_Transformacio_CPU (GfxTexture* pantalla_tex, GfxTexture* mostrar_tex, int* tabla_calibracion, int SV_Id  )
+{
+	int Ancho_Pant = mostrar_tex->GetWidth();
+	int Alto_Pant  = mostrar_tex->GetHeight();
+
+	unsigned char *vector_pantalla = (unsigned char*) malloc (sizeof(char)*1944*1944*4);
+
+	pantalla_tex->GetPixels( vector_pantalla );
+	Mat mat_pantalla = Mat (Size(1944,1944), CV_8UC4, vector_pantalla );
+	Mat mat_mostrar_text ( Size(Ancho_Pant,Alto_Pant) ,  CV_8UC4, Scalar(0,0,0,255));
+	//Mat mat_calibracion (Size(mostrar_tex->GetWidth(), mostrar_tex->GetHeight()), CV_32FC4, Scalar(0,0,0,255));
+
+	Mat punt = Mat(Size(1, 3), CV_64FC1, Scalar(0,0,1));
+
+	int fin_i = mostrar_tex->GetWidth();
+	int fin_j = mostrar_tex->GetHeight();
+
+	Mat dHi;
+	loadHomographyInverseParams(dHi,  SV_Id);
+
+	int cnt = 0;
+	for(int cnt_i=0; cnt_i<fin_i; cnt_i++ )
+	{
+		for(int cnt_j=0; cnt_j<fin_j; cnt_j++ )
+		{
+			punt.at<double>(0,0)= cnt_i;
+			punt.at<double>(0,1)= cnt_j;
+			punt.at<double>(0,2)= 1.0;
+
+			Mat punt_T = dHi*punt;
+			int y = (int)(punt_T.at<double>(0,0)/punt_T.at<double>(0,2));
+			int x = (int)(punt_T.at<double>(0,1)/punt_T.at<double>(0,2));
+
+			if(x>=0 && x<1944 && y>=0 && y<1944)
+			{
+				mat_mostrar_text.at<Vec4b>(cnt_i,cnt_j)[0]= mat_pantalla.at<Vec4b>(x,y)[0];
+				mat_mostrar_text.at<Vec4b>(cnt_i,cnt_j)[1]= mat_pantalla.at<Vec4b>(x,y)[1];
+				mat_mostrar_text.at<Vec4b>(cnt_i,cnt_j)[2]= mat_pantalla.at<Vec4b>(x,y)[2];
+				mat_mostrar_text.at<Vec4b>(cnt_i,cnt_j)[3]= mat_pantalla.at<Vec4b>(x,y)[3];
+			
+				int posIM  = (x*1944 + y)*4; //int posIM  = (x*1944 + y)*4;
+				int posTEX = (cnt_i*fin_i + cnt_j)*4;
+				tabla_calibracion[cnt] = posIM;
+				tabla_calibracion[cnt+1] = posTEX;
+				cnt=cnt+2;	
+			}		
+		}
+	}
+
+    mat2textUC( mat_mostrar_text, mostrar_tex);
+	//mat2textF ( mat_textura_calibracion, textura_calibracion);
+
+	free(vector_pantalla);
+
+	return cnt;
+}
+
+int Matriu_TransIComp_CPU ( sistema_visio* pSV, sistema_visio* pSVx, int cntT) //unsigned char* image_actual, unsigned char* vector_mostrar_ant, GfxTexture* mostrar_tex, int* tabla_calibracion, int cntT)
+{
+    long int error_total=0;
+
+    unsigned char* image_actual = pSV->Get_Vect_Im();
+    unsigned char* vector_mostrar_ant = pSV->Get_Vect_Compensada();
+    GfxTexture* mostrar_tex = pSV->Get_Textura();
+    int* tabla_calibracion = pSV->Get_Tabla_Calibracion();
+
+	for(int cnt=0; cnt<cntT; cnt=cnt+2 )
+	{
+		int posIM  = tabla_calibracion[cnt];
+		int posTEX = tabla_calibracion[cnt+1];
+
+		int roig = vector_mostrar_ant[posTEX];
+		int vert = vector_mostrar_ant[posTEX+1];
+		int blau = vector_mostrar_ant[posTEX+2];
+		//int alfa = vector_mostrar_ant[posTEX+3];
+				
+		int error = (int)(floor(0.9*(48 - image_actual[posIM])));
+
+		int col_global= roig + vert + blau + error;
+
+		error_total = error_total + abs(48 - image_actual[posIM]);
+
+		vector_mostrar_ant[posTEX]   = col_global;
+		vector_mostrar_ant[posTEX+1] = col_global-255;
+		vector_mostrar_ant[posTEX+2] = col_global-510;
+		vector_mostrar_ant[posTEX+3] = 255;
+
+		if (col_global-510<0)   vector_mostrar_ant[posTEX+2] =0;
+		if (col_global-255<0)   vector_mostrar_ant[posTEX+1] =0;
+		if (col_global<0)       vector_mostrar_ant[posTEX]   =0;
+		if (col_global-510>255) vector_mostrar_ant[posTEX+2] =255;
+		if (col_global-255>255) vector_mostrar_ant[posTEX+1] =255;
+		if (col_global>255)     vector_mostrar_ant[posTEX]   =255;
+	}
+
+
+    float Mija_error		= (float)((double)error_total/(double)cntT);
+    float Mija_error_ant	= pSV->Get_Mija_Erro();
+    float minimo		= pSV->Get_Minim_Erro();
+
+    pSV->Inc_It_Error();
+    int i = pSV-> Get_It_Comp();
+    float MET_Ant = pSV-> Get_MET_Ant();
+
+    // MET = Mija Error Total
+    float MET_Act = (MET_Ant*(i-1) + Mija_error) / i;
+    float dMET = MET_Ant - MET_Act;
+    float dM = Mija_error_ant - Mija_error;
+    float alpha = pSV-> Get_alpha();
+    alpha = alpha + dM;
+    pSV-> Set_alpha( abs(dM) );
+
+    if(i==1) pSV-> Set_alpha( alpha );
+
+
+    bool min_found= pSV->Get_min_found();
+
+    // Calcul del minim
+    if( (Mija_error < minimo) && !min_found )
+    {
+        pSV->Set_Minim_Erro( Mija_error );
+        memcpy( pSV-> Get_Vect_Opt_Comp(), vector_mostrar_ant, 480*431*4);
+        pSV->Init_It_Error();
+        cout << "Encontrado." << endl;
+
+    }
+    cout << "Media: " << Mija_error <<  ", minimo: " << minimo << endl;
+
+    // Bloqueig
+    if( !min_found && pSV->Get_It_Error()>15) //abs(dMET)<0.1 && abs(dM)<0.1 &&
+    {
+        pSV-> Set_min_found( true );
+	pSV->Init_It_Imagens();
+	pSVx->Init_It_Imagens();
+        min_found=true;
+    }
+
+    bool reset_comp = pSV->Get_Reset_Comp();
+    // Reset
+    if( reset_comp ) //if( abs(dM)>6 && min_found )
+    {
+	pSV-> Set_Reset_Comp( false );
+        pSV-> Init_Textura(cntT);
+        //pSV-> Init_Textura_Groc();
+        pSV-> Init_Erro_Minim();
+        pSV-> Init_Erro_Mija();
+        pSV-> Init_It_Error();
+        pSV-> Init_MET_Ant(); //Mija Error Total An
+        pSV-> Init_It_Comp();
+        pSV-> Set_min_found( false );
+    }
+
+    //cout << "Mija Ant: " << Mija_error_ant << ", Mija Actual: " << Mija_error  << ", dM: " << dM << endl;
+    //cout << "MET_Ant: "  << MET_Ant << ", MET_Act: "  << MET_Act << ", dMET: "  << dMET << endl;
+    //cout << "Minim      : "  << minimo << ", Alpha: " << alpha << endl;
+    if(min_found) cout << "Bloqueado" << endl;
+    cout << endl;
+
+    pSV-> Set_MET_Ant( MET_Act );
+    pSV-> Set_Mija_Erro( Mija_error );
+
+    //mostrar_tex->SetPixels( vector_mostrar_ant );
+    if( !min_found ) mostrar_tex->SetPixels( vector_mostrar_ant );
+    if(  min_found ) mostrar_tex->SetPixels( pSV->Get_Vect_Opt_Comp() );
+
+    return min_found;
+}
+
+
+bool Matriu_Transformacio_CPU_tables (unsigned char* image_desti, GfxTexture* mostrar_tex, int* tabla_calibracion, int cntT)
+{
+	int Ancho_Pant = mostrar_tex->GetWidth();
+	int Alto_Pant  = mostrar_tex->GetHeight();
+
+	unsigned char *vector_mostrar_tex  = (unsigned char*) malloc (sizeof(char)*Ancho_Pant*Alto_Pant*4);
+
+	int fin_i = mostrar_tex->GetWidth();
+	int fin_j = mostrar_tex->GetHeight();
+
+	//for(int cnt=0; cnt<fin_i*fin_j*4; cnt=cnt+4 )
+	for(int cnt=0; cnt<cntT; cnt=cnt+2 )
+	{
+		int posIM  = tabla_calibracion[cnt];
+		int posTEX = tabla_calibracion[cnt+1];
+		
+		vector_mostrar_tex[posTEX]   = image_desti[posIM];
+		vector_mostrar_tex[posTEX+1] = image_desti[posIM+1];
+		vector_mostrar_tex[posTEX+2] = image_desti[posIM+2];
+		vector_mostrar_tex[posTEX+3] = image_desti[posIM+3];
+	}
+
+
+	mostrar_tex->SetPixels(vector_mostrar_tex);
+
+	free(vector_mostrar_tex);
+
+	return true;
+}
+
+bool Matriu_Transformacio_CPU (GfxTexture* pantalla_tex, GfxTexture* mostrar_tex, int SV_Id )
+{
+	unsigned char *vector_pantalla = (unsigned char*) malloc (sizeof(char)*1944*1944*4);
+	
+	pantalla_tex->GetPixels( vector_pantalla );
+	Mat mat_pantalla = Mat (Size(1944,1944), CV_8UC4, vector_pantalla );
+	Mat mat_mostrar_text (Size(mostrar_tex->GetWidth(),mostrar_tex->GetHeight()), CV_8UC4, Scalar(0,0,0,255));
+
+	Mat punt = Mat(Size(1, 3), CV_64FC1, Scalar(0,0,1));
+
+	int fin_i = mostrar_tex->GetWidth();
+	int fin_j = mostrar_tex->GetHeight();
+
+	Mat dHi;
+	loadHomographyInverseParams(dHi,  SV_Id);
+
+	for(int cnt_i=0; cnt_i<fin_i; cnt_i++ )
+	{
+		for(int cnt_j=0; cnt_j<fin_j; cnt_j++ )
+		{
+				punt.at<double>(0,0)= cnt_i;
+				punt.at<double>(0,1)= cnt_j;
+				punt.at<double>(0,2)= 1.0;
+
+				Mat punt_T = dHi*punt;
+				int y = (int)(punt_T.at<double>(0,0)/punt_T.at<double>(0,2));
+				int x = (int)(punt_T.at<double>(0,1)/punt_T.at<double>(0,2));
+
+
+				if(x>=0 && x<1944 && y>=0 && y<1944)
+				{
+					mat_mostrar_text.at<Vec4b>(cnt_i,cnt_j)[0]= mat_pantalla.at<Vec4b>(x,y)[0];
+					mat_mostrar_text.at<Vec4b>(cnt_i,cnt_j)[1]= mat_pantalla.at<Vec4b>(x,y)[1];
+					mat_mostrar_text.at<Vec4b>(cnt_i,cnt_j)[2]= mat_pantalla.at<Vec4b>(x,y)[2];
+					mat_mostrar_text.at<Vec4b>(cnt_i,cnt_j)[3]= mat_pantalla.at<Vec4b>(x,y)[3];
+				}
+		}
+	}
+
+	mat2textUC( mat_mostrar_text, mostrar_tex);
+
+	free(vector_pantalla);
+
+	return true;
+}
+
+/*********************************************************
+ Reduce la imagen cuadrada a un círculo
+*********************************************************/
+int CIRCUL (unsigned char* circul, unsigned char* image)
+{
+    int ANCHO = HEIGHT_F;
+    int ALTO = HEIGHT_F;
+    int x0 = ANCHO/2, y0=ALTO/2, r=972;
+	int xs,cx,k,ni=0,N,N1,XN,Xc,r2=pow(r,2);
+
+	// Generar Circul de Visio
+	N = y0-r;
+	if(N<0) N=0;
+    k = N*ANCHO;
+    for( int j=0; j<ALTO; j++ )
+	{
+		xs=(int)floor(x0-sqrt(r2-pow(r-j,2)));
+		cx=(int)floor(abs(sqrt(r2 - pow(r-j,2))));
+        N=j*ANCHO;
+
+        N1=N+ANCHO;
+		XN=N+xs;
+		Xc=XN+2*cx;
+		memcpy(&circul[ni], &image[XN], Xc-XN);
+		ni = ni +Xc-XN;
+	}
+
+	return ni;
+
+}
+
+void test_calibracion_antonio(unsigned char* image, GfxTexture* pantalla, float* corregir_x, float* corregir_y,  int SV_Id)
+{
+	unsigned char* image_wb = (unsigned char*) malloc (sizeof(char)*1944*1944);
+	memset(image_wb, 255, 1944*1944);
+
+	Size imageSize;
+
+	vector<Point2f> imagePoints;
+	vector<Point2f> displayPoints;
+
+	Mat dHi;
+	loadHomographyParams(dHi,  SV_Id);
+
+	Size boardSize;
+	boardSize.height = 7;
+	boardSize.width = 3;
+
+	float squareSize;            // The size of a square in your defined unit (point, millimeter,etc).
+	squareSize = 42;
+	
+	for(int cnt=0; cnt<1944*1944; cnt++)
+		if(image[cnt]>20)
+			image_wb[cnt]=0;
+
+	Mat view = Mat (Size(1944,1944), CV_8UC1, image_wb );
+	
+	pantalla->SetPixels( image_wb );
+
+	if (!view.empty()) {
+
+		imageSize = view.size();  // Format input image.
+
+		
+		bool found = false;
+		found = findCirclesGrid(view, boardSize, imagePoints, CALIB_CB_ASYMMETRIC_GRID);
+		for (int kk=0; kk<imagePoints.size(); kk++) {
+			imagePoints.at(kk) = imagePoints.at(kk)*3.0;
+		}
+		
+		if (found)
+			{
+				for (int i = 0; i < boardSize.height; i++)
+				for (int j = 0; j < boardSize.width; j++)
+					displayPoints.push_back(Point2f(134 + ((2 * j + i % 2)*squareSize), 105.191061452 + (i*squareSize*(0.1926/0.1790))));
+
+				double displayPointsErr = computeReprojectionErrorsH(imagePoints, displayPoints, dHi, corregir_x, corregir_y);
+				
+				saveHomographyParams(displayPoints, imagePoints, dHi, displayPointsErr, SV_Id);
+
+			}
+
+	}
+		
+	free(image_wb);
+}
+
+void calibracion_antonio(unsigned char* image, GfxTexture* textura, float* corregir_x , float* corregir_y,  int SV_Id )
+{
+	unsigned char* image_wb = (unsigned char*) malloc (sizeof(char)*1944*1944);
+	memset( image_wb, 255, 1944*1944);
+
+	Size imageSize;
+
+	vector<Point2f> imagePoints;
+	vector<Point2f> displayPoints;
+	Mat dHi;
+
+	Size boardSize;
+	boardSize.height = 7;
+	boardSize.width = 3;
+
+	float squareSize;            // The size of a square in your defined unit (point, millimeter,etc).
+	squareSize = 42;
+	
+	for(int cnt=0; cnt<1944*1944; cnt++)
+		if(image[cnt]>20)
+			image_wb[cnt]=0;
+
+	Mat view = Mat (Size(1944,1944), CV_8UC1, image_wb );
+	
+	textura->SetPixels( image_wb );
+
+	if (!view.empty()) {
+
+		imageSize = view.size();  // Format input image.
+
+		
+		bool found = false;
+		found = findCirclesGrid(view, boardSize, imagePoints, CALIB_CB_ASYMMETRIC_GRID);
+		for (int kk=0; kk<imagePoints.size();kk++) {
+			imagePoints.at(kk) = imagePoints.at(kk)*3.0;
+		}
+		
+		if (found)             
+			{
+				for (int i = 0; i < boardSize.height; i++)
+				for (int j = 0; j < boardSize.width; j++)
+					displayPoints.push_back(Point2f(134 + ((2 * j + i % 2)*squareSize), 105.191061452 + (i*squareSize*(0.1926/0.1790)))); // 105.191061452
+
+				
+				dHi = findHomography(imagePoints, displayPoints);
+				double displayPointsErr = computeReprojectionErrorsH(imagePoints, displayPoints, dHi, corregir_x, corregir_y);
+				
+				saveHomographyParams(displayPoints, imagePoints, dHi, displayPointsErr,  SV_Id);
+			}
+	}
+	
+	free(image_wb);
+}
+
+bool calibracion_inversa_antonio(unsigned char* image, GfxTexture* textura, float* corregir_x , float* corregir_y,  int SV_Id )
+{
+	bool found = false;
+	unsigned char* image_wb = (unsigned char*) malloc (sizeof(char)*1944*1944);
+	memset( image_wb, 255, 1944*1944);
+
+	float OFFSET_X, OFFSET_Y;
+
+	if(SV_Id==1)
+	{
+		OFFSET_X = OFFSET_1_X;
+		OFFSET_Y = OFFSET_1_Y;
+	}
+	if(SV_Id==2)
+	{
+		OFFSET_X = OFFSET_2_X;
+		OFFSET_Y =  OFFSET_2_Y;
+	}
+
+	Size imageSize;
+
+	vector<Point2f> imagePoints;
+	vector<Point2f> displayPoints;
+	Mat dHi;
+
+	Size boardSize;
+	boardSize.height = 7;
+	boardSize.width  = 3;
+
+	float squareSize;            // The size of a square in your defined unit (point, millimeter,etc).
+	squareSize = 42;
+	
+	for(int cnt=0; cnt<1944*1944; cnt++)
+		if(image[cnt]>20)
+			image_wb[cnt]=0;
+
+	Mat view = Mat (Size(1944,1944), CV_8UC1, image_wb );
+	
+	textura->SetPixels( image_wb );
+
+	if (!view.empty())
+	{
+		imageSize = view.size();  // Format input image.
+		
+		found = findCirclesGrid(view, boardSize, imagePoints, CALIB_CB_ASYMMETRIC_GRID);
+		for (int kk=0; kk<imagePoints.size();kk++) {
+			imagePoints.at(kk) = imagePoints.at(kk)*3.0;
+		}
+		
+		if (found)             
+			{
+				for (int i = 0; i < boardSize.height; i++)
+				for (int j = 0; j < boardSize.width; j++)
+					displayPoints.push_back(Point2f(134 + OFFSET_Y + ((2 * j + i % 2)*squareSize), 105.191061452 + OFFSET_X + (i*squareSize*(0.1926/0.1790)))); // 105.191061452
+				dHi = findHomography(displayPoints, imagePoints);
+				double displayPointsErr = computeReprojectionErrorsH( displayPoints, imagePoints, dHi, corregir_x, corregir_y);
+				saveInverseHomographyParams( imagePoints, displayPoints, dHi, displayPointsErr, SV_Id);
+			}
+	}
+	free(image_wb);
+	return found;
+}
+
+static double computeReprojectionErrorsH(const vector<Point2f>& imagePoints,
+	const vector<Point2f>& displayPoints, const Mat& dHi, float* corregir_x, float* corregir_y)
+{
+	double totalErr = 0, err;
+	double dx[21], dy[21];
+	double dxmax=0, dymax=0, dxmin=10000, dymin=10000;
+	
+	int tamany = (int)imagePoints.size();
+	vector<Point2f> displayPointsEst(tamany);
+
+	perspectiveTransform(imagePoints, displayPointsEst, dHi);
+
+	FileStorage fs("/home/pi/errores_data.xml", FileStorage::WRITE);
+	for (int kk=0; kk < tamany; kk++) {
+		dx[kk] = displayPointsEst[kk].x - displayPoints[kk].x;
+		dy[kk] = displayPointsEst[kk].y - displayPoints[kk].y;
+		//err = sqrt((dx*dx)+(dy*dy));
+		fs << "errorx" << dx[kk];
+		fs << "errory" << dy[kk];
+		*corregir_x += (float)dx[kk];
+		*corregir_y += (float)dy[kk];
+	}
+
+	for(int cnt=0; cnt<21; cnt++) if( dx[cnt]>dxmax ) dxmax = dx[cnt];
+	for(int cnt=0; cnt<21; cnt++) if( dy[cnt]>dymax ) dymax = dy[cnt];
+
+	for(int cnt=0; cnt<21; cnt++) if( dx[cnt]<dxmin ) dxmin = dx[cnt];
+	for(int cnt=0; cnt<21; cnt++) if( dy[cnt]<dymin ) dymin = dy[cnt];
+
+	//*corregir_x = (dxmax-dxmin)/2;
+	*corregir_x = *corregir_x/21;
+	fs << "corregit_x" << *corregir_x;
+	//*corregir_y = (dymax-dymin)/2;
+	*corregir_y = *corregir_y/21;
+	fs << "corregit_y" << *corregir_y;
+	//fs << "dxmax" << dxmax;
+	//fs << "dymax" << dymax;
+	//fs << "dxmin" << dxmin;
+	//fs << "dymin" << dymin;
+
+	fs.release();
+
+	err = norm(displayPoints, displayPointsEst, NORM_L2);
+	totalErr = err*err;
+	return std::sqrt(totalErr / tamany);
+}
+
+/********************************************************************************
+Guarda la Homografia Inversa en un archivo
+*********************************************************************************/
+static void saveInverseHomographyParams(vector<Point2f> displayPoints, vector<Point2f> imagePoints, Mat dHi, double displayPointsErr, int SV_Id)
+{
+	char ruta[100];
+	if(SV_Id==1) strcpy(ruta, "/home/pi/inverse_homography_CAM1.xml");
+	if(SV_Id==2) strcpy(ruta, "/home/pi/inverse_homography_CAM2.xml");
+
+       cout << "Guardando datos de calibracion en... "<< ruta << endl;
+       //FileStorage fs("/home/pi/out_inverse_homography_data.xml", FileStorage::WRITE);
+	FileStorage fs(ruta, FileStorage::WRITE);
+ 
+       if (!displayPoints.empty())
+       {
+             int tamany = (int)displayPoints.size();
+             Mat displayPtMat(2, tamany, CV_32FC1);
+             for (size_t i = 0; i < tamany; i++)
+             {
+                    displayPtMat.at<float>(0, i) = displayPoints[i].x;
+                    displayPtMat.at<float>(1, i) = displayPoints[i].y;
+             }
+             fs << "displayPoints" << displayPtMat;
+       }
+ 
+       if (!imagePoints.empty())
+       {
+             int tamany = (int)imagePoints.size();
+             Mat imagePtMat(2, tamany, CV_32FC1);
+             for (size_t i = 0; i < tamany; i++)
+             {
+                    imagePtMat.at<float>(0, i) = imagePoints[i].x;
+                    imagePtMat.at<float>(1, i) = imagePoints[i].y;
+             }
+             fs << "image_points" << imagePtMat;
+       }
+ 
+       fs << "dHi" << dHi;
+       fs << "displayPoints_reprojection_error" << displayPointsErr;
+ 
+}
+
+/********************************************************************************
+Guarda la Homografia en un archivo
+*********************************************************************************/
+static void saveHomographyParams(vector<Point2f> displayPoints, vector<Point2f> imagePoints, Mat dHi, double displayPointsErr, int SV_Id)
+{
+	char ruta[100];
+	if(SV_Id==1) strcpy(ruta, "/home/pi/homography_CAM1.xml");
+	if(SV_Id==2) strcpy(ruta, "/home/pi/homography_CAM2.xml");
+
+       cout << "Guardando datos de calibracion CAM1... " << endl;
+       //FileStorage fs("/home/pi/homography.xml", FileStorage::WRITE);
+	FileStorage fs(ruta, FileStorage::WRITE);
+ 
+       if (!displayPoints.empty())
+       {
+             int tamany = (int)displayPoints.size();
+             Mat displayPtMat(2, tamany, CV_32FC1);
+             for (size_t i = 0; i < tamany; i++)
+             {
+                    displayPtMat.at<float>(0, i) = displayPoints[i].x;
+                    displayPtMat.at<float>(1, i) = displayPoints[i].y;
+             }
+             fs << "displayPoints" << displayPtMat;
+       }
+ 
+       if (!imagePoints.empty())
+       {
+             int tamany = (int)imagePoints.size();
+             Mat imagePtMat(2, tamany, CV_32FC1);
+             for (size_t i = 0; i < tamany; i++)
+             {
+                    imagePtMat.at<float>(0, i) = imagePoints[i].x;
+                    imagePtMat.at<float>(1, i) = imagePoints[i].y;
+             }
+             fs << "image_points" << imagePtMat;
+       }
+ 
+       fs << "dHi" << dHi;
+       fs << "displayPoints_reprojection_error" << displayPointsErr;
+}
+ 
+/********************************************************************************
+Carga la Homografia
+*********************************************************************************/
+static void loadHomographyParams(Mat& dHi, int SV_Id )
+{
+	if(SV_Id==1)
+	{
+	       cout << "Cargando datos de calibracion CAM1... " << endl;
+	       FileStorage fs("/home/pi/homography_CAM1.xml", FileStorage::READ);
+	       fs["dHi"] >> dHi;
+	}
+	if(SV_Id==2)
+	{
+	       cout << "Cargando datos de calibracion CAM2... " << endl;
+	       FileStorage fs("/home/pi/homography_CAM2.xml", FileStorage::READ);
+	       fs["dHi"] >> dHi;
+	}
+}
+
+/********************************************************************************
+Carga la Homografia Inversa
+*********************************************************************************/
+static void loadHomographyInverseParams(Mat& dHi, int SV_Id)
+{
+	if(SV_Id==1)
+	{
+	       cout << "Cargando datos de calibracion CAM1... " << endl;
+	       FileStorage fs("/home/pi/inverse_homography_CAM1.xml", FileStorage::READ); 
+	       fs["dHi"] >> dHi;
+	}
+	if(SV_Id==2)
+	{
+	       cout << "Cargando datos de calibracion CAM2... " << endl;
+	       FileStorage fs("/home/pi/inverse_homography_CAM2.xml", FileStorage::READ); 
+	       fs["dHi"] >> dHi;
+	}
+}
+ 
+
+/********************************************************************************
+Genera una image quadrada a partir d'una rectangular (format vector de char)
+*********************************************************************************/
+int QUADRAT (unsigned char* quadrat, unsigned char* image)
+{
+	int D = 324, ni=0;
+
+	for( int j=0; j<HEIGHT_F; j++ )
+	{
+		memcpy(&quadrat[ni], &image[j*WIDTH_F+D], HEIGHT_F);
+		ni = ni+HEIGHT_F;
+	}
+
+	return ni;	
+}
+
+
+/***************************************************
+De Entero a String
+****************************************************/
+string int2string (int sancer)
+{
+	stringstream converter;
+	converter.str("");
+	converter << sancer;
+	string convertit = converter.str();
+
+	return convertit;
+}
+
+/***************************************************
+De Float a String
+****************************************************/
+string float2string (float sancer)
+{
+	stringstream converter;
+	converter.str("");
+	converter << sancer;
+	string convertit = converter.str();
+
+	return convertit;
+}
+
+/*******************************************************
+Convierte un entero a string y le añade 0s ->  000001 
+********************************************************/
+string NOM_000X ( int sequencia)
+{
+	string NOM1   = int2string(sequencia);
+
+	if(sequencia>=    0 && sequencia<        10) NOM1 = "00000" + NOM1;
+	if(sequencia>      9 && sequencia<      100) NOM1 = "0000" + NOM1;
+	if(sequencia>    99 && sequencia<    1000) NOM1 = "000" + NOM1;
+	if(sequencia>  999 && sequencia<  10000) NOM1 = "00" + NOM1;
+	if(sequencia>9999 && sequencia<100000) NOM1 = "0" + NOM1;
+
+	return NOM1;
+}
+
+/***************************************************
+Configuracio a partir de la conexio remota
+****************************************************/
+int Configuracio_Remota( int sock, int TAM, float temperatura, int Id, int NUM_IMAGE )
+{
+	int bytes_recieved , si = 1, i, ENVIAT, repetir =0,j=0, BYTES=1;
+
+	int ni = TAM;
+	char FI[5]="0", CONFIRMACIO[100]="";         
+           
+	char INFO[70] = "";
+
+	string tempt   = float2string(temperatura);
+	string ample1 = int2string(WIDTH_F);
+	string alt1       = int2string(HEIGHT_F);
+	string BY1       = int2string(BYTES);
+
+	string NOM1   = NOM_000X (NUM_IMAGE);
+	string I             = NOM_000X (ni);
+
+	string Id_Camara;
+	if(Id==1) Id_Camara = "RASP01_ ";
+	if(Id==2) Id_Camara = "RASP02_ ";
+
+	string INFO6 = Id_Camara + NOM1 + " " + ample1 + " " + alt1 + " " + BY1
+		     + " " + "0972" + " " + "1296" + " " + "0972" + " " + I 
+		     + " " + fin_captura + " " + tempt  +'\0';
+
+	int kt = INFO6.size(); 
+	for(int k = 0; k < kt ; k++) INFO[k]=INFO6[k];
+	INFO[kt]  = '\0';
+	INFO6[kt] = '\0';
+
+	mvprintw(5,0,"%s | Num caracters: %i", INFO, sizeof(INFO));
+
+		
+	// Enviar INFO del DISPOSITIU i MENSAGE
+	if(send(sock,&INFO,71,0)==-1) goto FINISH; 
+	fin_captura = false;
+	
+	// Rebre Configuracio
+	if(recv(sock,&CONFIRMACIO,99,0)==-1) goto FINISH;
+	if(!bloquejat)
+	{
+        dia =       		(int)CONFIRMACIO[0];	//ref_temp = 	(int)CONFIRMACIO[0];
+        condicion = 		(char)CONFIRMACIO[1];	//Rc = 		(int)CONFIRMACIO[1];
+        probeta = 		(int)CONFIRMACIO[2];	//Gc = 		(int)CONFIRMACIO[2];
+	NUM_CAMS = 	(int)CONFIRMACIO[3];	//Bc =		(int)CONFIRMACIO[3];
+//		fps =		(int)CONFIRMACIO[4];
+//		brightness =	(int)CONFIRMACIO[5]; 
+
+		// CONFIRMACIO[6] MODO =  8 bits: 
+		inici_remot    = (bool)((CONFIRMACIO[6] & 128)>>7);
+		G_Local          = (bool)((CONFIRMACIO[6] &  64)>>6);
+		enviar             = (bool)((CONFIRMACIO[6] &  32)>>5);
+		apagar_RPI       = (bool)((CONFIRMACIO[6] &  16)>>4);
+
+        if(inici_remot)
+        {
+            char generada1[100]="";
+            char generada2[100]="";
+            char ruta_completa1[150]="";
+            char ruta_completa2[150]="";
+            char raiz[50]="";
+            strcpy(raiz, DIR_PEN);
+
+            generar_carpeta (generada1, generada2, nombre, dia, condicion, probeta );
+            generar_ruta_completa (ruta_completa1, raiz, generada1);
+            generar_ruta_completa (ruta_completa2, raiz, generada2);
+
+            //if(!existe(ruta_completa1)) crear_carpeta (ruta_completa1); //if(!existe(ruta_completa1))
+            //if(!existe(ruta_completa2)) crear_carpeta (ruta_completa2); //if(!existe(ruta_completa2))
+            strcpy(nom_proyecte1, ruta_completa1);
+            strcpy(nom_proyecte2, ruta_completa2);
+
+        }
+		fondo = 	(int)CONFIRMACIO[7];
+		ACCIO = 	(int)CONFIRMACIO[8];
+
+		char S_umbral[7];
+		for(int correr=0; correr<6; correr++ ) S_umbral[correr] = CONFIRMACIO[correr+9];
+		umbral = atof(S_umbral);
+
+		char VS[7];		
+		for(int correr=0; correr<7; correr++ ) VS[correr] = CONFIRMACIO[correr+15];
+//		speed_ms = atoi(VS);  
+		for(int correr=0; CONFIRMACIO[correr+22]!='\0'; correr++)
+		{
+			nombre[correr] = CONFIRMACIO[correr+22];
+		}
+
+/*		bool nova_paraula=false;
+		int correr2=0;
+		for(int correr=0; CONFIRMACIO[correr+22]!='\0'; correr++)
+		{
+			if(CONFIRMACIO[correr+22]=='/')
+			{
+				nova_paraula=true;
+				correr2=0;
+			} 
+			if (!nova_paraula) carpeta[correr] = CONFIRMACIO[correr+22];
+			if (nova_paraula) nom_proyecte[correr2] = CONFIRMACIO[correr+23];
+			correr2++;
+        }*/
+		mvprintw(3,0,"Inici: %i, G_Local: %i, Enviar: %i, ", inici_remot, G_Local, enviar);
+	}
+
+	return 1;
+
+	FINISH:
+        	return -1; 
+
+}
+
+/***************************************************
+Configuracio a partir de la conexio remota
+****************************************************/ /*
+int Configuracio_Remota( int sock, int TAM, float temperatura, int Id, int NUM_IMAGE )
+{
+    int bytes_recieved , si = 1, i, ENVIAT, repetir =0,j=0, BYTES=1;
+
+    int ni = TAM;
+    char FI[5]="0", CONFIRMACIO[100]="";
+
+    char INFO[70] = "";
+
+    string tempt   = float2string(temperatura);
+    string ample1 = int2string(WIDTH_F);
+    string alt1       = int2string(HEIGHT_F);
+    string BY1       = int2string(BYTES);
+
+    string NOM1   = NOM_000X (NUM_IMAGE);
+    string I             = NOM_000X (ni);
+
+    string Id_Camara;
+    if(Id==1) Id_Camara = "RASP01_ ";
+    if(Id==2) Id_Camara = "RASP02_ ";
+
+    string INFO6 = Id_Camara + NOM1 + " " + ample1 + " " + alt1 + " " + BY1
+             + " " + "0972" + " " + "1296" + " " + "0972" + " " + I
+             + " " + fin_captura + " " + tempt  +'\0';
+
+    int kt = INFO6.size();
+    for(int k = 0; k < kt ; k++) INFO[k]=INFO6[k];
+    INFO[kt]  = '\0';
+    INFO6[kt] = '\0';
+
+    mvprintw(5,0,"%s | Num caracters: %i", INFO, sizeof(INFO));
+
+
+    // Enviar INFO del DISPOSITIU i MENSAGE
+    if(send(sock,&INFO,71,0)==-1) goto FINISH;
+    fin_captura = false;
+
+    // Rebre Configuracio
+    if(recv(sock,&CONFIRMACIO,99,0)==-1) goto FINISH;
+    if(!bloquejat)
+    {
+        ref_temp = 	(int)CONFIRMACIO[0];
+        Rc = 		(int)CONFIRMACIO[1];
+        Gc = 		(int)CONFIRMACIO[2];
+        Bc =		(int)CONFIRMACIO[3];
+//		fps =		(int)CONFIRMACIO[4];
+//		brightness =	(int)CONFIRMACIO[5];
+
+        // CONFIRMACIO[6] MODO =  8 bits:
+        inici_remot    = (bool)((CONFIRMACIO[6] & 128)>>7);
+        G_Local          = (bool)((CONFIRMACIO[6] &  64)>>6);
+        enviar             = (bool)((CONFIRMACIO[6] &  32)>>5);
+        apagar_RPI    = (bool)((CONFIRMACIO[6] &  16)>>4);
+
+        fondo = 	(int)CONFIRMACIO[7];
+        ACCIO = 	(int)CONFIRMACIO[8];
+
+        char S_umbral[7];
+        for(int correr=0; correr<6; correr++ ) S_umbral[correr] = CONFIRMACIO[correr+9];
+        umbral = atof(S_umbral);
+
+        char VS[7];
+        for(int correr=0; correr<7; correr++ ) VS[correr] = CONFIRMACIO[correr+15];
+//		speed_ms = atoi(VS);
+
+        bool nova_paraula=false;
+        int correr2=0;
+        for(int correr=0; CONFIRMACIO[correr+22]!='\0'; correr++)
+        {
+            if(CONFIRMACIO[correr+22]=='/')
+            {
+                nova_paraula=true;
+                correr2=0;
+            }
+            if (!nova_paraula) carpeta[correr] = CONFIRMACIO[correr+22];
+            if (nova_paraula) nom_proyecte[correr2] = CONFIRMACIO[correr+23];
+            correr2++;
+        }
+        mvprintw(3,0,"Inici: %i, G_Local: %i, Enviar: %i, ", inici_remot, G_Local, enviar);
+    }
+
+    return 1;
+
+FINISH:
+        return -1;
+
+}*/
+
+
+/***************************************************
+Enviar image al Servidor
+****************************************************/
+int ENVIAR_IMAGE (char* image, int sock, int TAM )  //const uint8_t* image
+{
+	int enviat;
+	char FI[5]="0";
+	int ni=TAM;
+
+	// Enviar l'image al servidor
+	if( (enviat = send(sock, (unsigned char*)image, ni, 0)) ==-1 ) goto FINISH;
+
+	// Rebre una ultima instruccio del Servidor	
+	if(recv(sock,FI,sizeof(FI),0)==-1) goto FINISH; 
+
+	return 1;
+
+FINISH:
+        return -1; 
+
+}
+
+/*********************************************************
+I2C. Recibe la temperatura del sensor por el puerto: I2C
+**********************************************************/
+float temp(int fd)
+{
+	int menut, gran, data, j=0;
+	float temperatura;
+
+	if(fd==-1)
+	{
+        	return -1;
+	}
+	else
+	{
+	        data=wiringPiI2CReadReg16(fd,0x05);
+
+	        if(data==-1) mvprintw(12,0,"No se reciben datos"); //printf("No se reciben datos\n");
+	        else
+	        {
+	        	gran=data & 0x00FF;
+			gran=(gran&0x1F);
+			menut=(data & 0xFF00) >> 8;
+			menut=(menut & 0xFC); 
+			if ((gran&0x10)==0x10) printf("NEGATIVO");
+			else
+			{
+				temperatura=gran*16+menut/(float)16;
+				j++;
+			}
+		}
+
+	}
+	//close(fd);
+	return temperatura;
+}
+
+/*********************************************************
+Temps. Dos funcions: Iniciar y medir
+**********************************************************/
+//Iniciar
+void Inicia_Temporisador(void)
+{
+		struct timespec gettime_now;
+		clock_gettime(CLOCK_REALTIME, &gettime_now);
+		start_time = gettime_now.tv_nsec;
+}
+
+//Medir
+double Medix_temps (void)
+{
+		struct timespec gettime_now;
+		clock_gettime(CLOCK_REALTIME, &gettime_now);
+		long int time_difference = gettime_now.tv_nsec-start_time;
+		if(time_difference < 0) time_difference += 1000000000;
+		double temps = double(time_difference)/1000000000.0;
+	
+		return temps;
+}
+
+/*********************************************************
+Configuracio remota de la Camara
+**********************************************************/
+void* config_cam( void* camera )
+{
+	MMAL_COMPONENT_T *cam1 = cam->get_CameraComponent();
+	int llum, brill=0, vel_int=0;
+	int saturation=0, sharpness=0, contrast=0, vstabilisation=0, exp_comp=0; //-24
+
+	raspicamcontrol_set_exposure_mode(cam1, MMAL_PARAM_EXPOSUREMODE_AUTO);
+	raspicamcontrol_set_saturation(cam1, saturation);      /// -100 to 100 
+	raspicamcontrol_set_sharpness (cam1,  sharpness);        /// -100 to 100
+	raspicamcontrol_set_contrast  (cam1,   contrast);	       /// -100 to 100
+	raspicamcontrol_set_brightness(cam1, brightness);      ///    0 to 100
+	//raspicamcontrol_set_metering_mode(cam1, MMAL_PARAM_EXPOSUREMODE_OFF);
+	raspicamcontrol_set_video_stabilisation(cam1, vstabilisation);         /// 0 or 1 (false or true)
+	raspicamcontrol_set_exposure_compensation(cam1, exp_comp);             /// -10 to +10 ?
+	raspicamcontrol_set_awb_mode(cam1, MMAL_PARAM_AWBMODE_OFF);
+	raspicamcontrol_set_awb_gains(cam1, 1, 1);
+	raspicamcontrol_set_shutter_speed(cam1, speed_ms);           //
+   	raspicamcontrol_set_ISO(cam1, 100);
+
+	
+	while(1)
+	{
+		if(ACCIO==5)
+		{
+			enviar=true;
+		}
+		refresh();
+		mvprintw(2,0,"----------- %s / %s ------------   ", carpeta, nom_proyecte);
+
+		mvprintw(14,0,"N - Proyecto                          : %s                 ", nom_proyecte);
+		mvprintw(15,0,"F - Carpeta                           : %s                  ", direccio);
+		mvprintw(16,0,"2 - fps                       (0 a 30): %i          ", fps);
+		mvprintw(17,0,"C - Conectar | D-Desconetar           : %i          ", con_conexion);
+		mvprintw(18,0,"4 - brightness               (0 a 100): %i          ", brightness);
+		mvprintw(19,0,"S - Empezar prueba | A-Abortar        : %i          ", capturando);
+		mvprintw(20,0,"6 - shutter_speed      (micro seconds): %i       ", speed_ms);
+		mvprintw(21,0,"9 - Illuminacion            (R, G, B) : %i, %i, %i       ", (int)Rc,(int)Gc,(int)Bc);
+		mvprintw(22,0,"7 - Pequeno / 8-Grande              ");
+		mvprintw(23,0,"0 - Umbral                  (0 a 100%): %f        ", umbral);
+		mvprintw(24,0,"Fondo: %i  ", fondo);
+		mvprintw(25,0,"Accion: %i", ACCIO);
+				
+		int ch = getch();
+		fflush(stdin);
+		if((ch == 'N' || ch == 'n') && !con_conexion)
+		{
+			mvprintw(14,0,"Introduzca Nombre de nuevo Proyecto:                       ");
+			fflush(stdin);			
+			char x[150]="";
+			cin >> x;
+
+			mvprintw(14,0,"Desea crear Proyecto:      %s    ? (Y/N):                      ", x);
+			fflush(stdin);
+			char YN;
+			cin >> YN;
+			fflush(stdin);
+			if(YN == 'Y' || YN == 'y' )
+			{
+				strcpy(nom_proyecte, x);
+				if (EXISTIX_PROYECTE())
+				{
+					mvprintw(14,0,"N - Proyecto %s EXISTE. Quieres SOBREESCRIBIR (Y/N)?                                  ", x);
+					fflush(stdin);
+					char YN1;
+					cin >> YN1;
+					fflush(stdin);
+					if(YN1 == 'Y' || YN1 == 'y') proyecte_nou=true;
+				}
+				else proyecte_nou=true;
+
+				mvprintw(14,0,"N - Proyecto: %s                                                          ", nom_proyecte);
+			}
+			else mvprintw(14,0,"N - Proyecto: %s                                      ", nom_proyecte);
+		}
+		if((ch == 'F' || ch == 'f') && !bloquejat  && !con_conexion)
+		{
+			mvprintw(15,0,"Desea cambiar la Carpeta del Sistema de Archivos?: (Y/N)              ");
+
+			fflush(stdin);
+			char YN;
+			cin >> YN;
+			fflush(stdin);
+			if(YN == 'Y' || YN == 'y' )
+			{
+				do
+				{
+					mvprintw(15,0,"Introduzca nombre de la nueva Carpeta:                   ");
+					fflush(stdin);			
+					char x[150]="";
+					cin >> x;
+					mvprintw(15,0,"Nueva Carpeta: $> %s --> Es correcto? (Y/N)                  ", x);
+					
+					fflush(stdin);
+					char OK1;				
+					cin >> OK1;
+					fflush(stdin);
+					if( OK1 != 'Y' || OK1 != 'y' ) 
+					{
+						strcpy(direccio, x);
+						break;
+					}
+				}while( 1 );
+				
+			}
+
+			mvprintw(15,0,"D - Carpeta: %s                                                ", direccio);
+		}
+		if(ch == '2'&& !bloquejat  && !con_conexion)
+		{
+			mvprintw(16,0,"2 - fps                       (0 a 30): -      ");
+			char x[5]=""; 
+			//gets(x);
+			scanf("%s",x);
+			int X = atoi(x);
+			if(X>=-100 && X<=100) fps = X;
+			//raspicamcontrol_set_sharpness(cam1, fps);
+			mvprintw(16,0,"2 - fps                       (0 a 30): %i  ", fps);
+		}
+		if((ch == 'C' || ch == 'c') && !bloquejat  && !con_conexion)
+		{
+			con_conexion = true;
+			mvprintw(17,0,"(C) - Conectar | (D) - Desconetar     : %i  ", con_conexion);
+		}
+		if(ch == 'D' || ch == 'd')
+		{
+			con_conexion = false;
+			mvprintw(17,0,"(C) - Conectar | (D) - Desconetar     : %i  ", con_conexion);
+		}
+		if(ch == '4' && !bloquejat  && !con_conexion)
+		{
+			mvprintw(18,0,"4 - brightness             (  0 a 100): -    ");
+			char x[5]=""; 
+			//gets(x);
+			scanf("%s",x);
+			int X = atoi(x);
+			if(X>=0 && X<=100) brightness = X;
+			raspicamcontrol_set_brightness(cam1, brightness);
+			mvprintw(18,0,"4 - brightness             (  0 a 100): %i", brightness);
+		}
+		if(ch == 'S' || ch == 's'  && !con_conexion && bloquejat)
+		{
+			capturando=true;
+			inici_local=true;
+			mvprintw(19,0,"(S) - Empezar prueba | (A) - Abortar  :          ");
+		}
+		if((ch == 'A' || ch == 'a')  && !con_conexion)
+		{
+			proyecte_nou=false;
+			bloquejat=false;
+			capturando=false;
+			abortar=true;
+			iniciat=false;
+			mvprintw(12,0,"---->  Puede modificar la configuración y crear nuevo proyecto                   ");
+			mvprintw(19,0,"(S) - Empezar prueba | (A) - Abortar  : %i          ", capturando);
+		}
+		if(ch == '6' && !bloquejat  && !con_conexion)
+		{
+			mvprintw(20,0,"6 - shutter_speed      (micro seconds): -             ");
+			char x[5]=""; 
+			//gets(x);
+			scanf("%s",x);
+			int X = atoi(x);
+			if(X>=0) speed_ms = X;
+			raspicamcontrol_set_shutter_speed(cam1, speed_ms);
+			mvprintw(20,0,"6 - shutter_speed      (micro seconds): %i          ", speed_ms);
+		}
+		if(ch == '7' ) selected_texture = 2;  //&& !bloquejat  && !con_conexion
+		if(ch == '8' ) selected_texture = 1;  //&& !bloquejat  && !con_conexion
+		if(ch == '9' && !bloquejat  && !con_conexion)
+		{
+			mvprintw(21,0,"2 - Illuminación            (R, G, B) : _,_,_         ");
+			char x[5]="";
+			fflush(stdin); 
+			scanf("%s",x);
+			int X = atoi(x);
+			if(X>=0 && X<=255) llum = X;
+			Rc = (unsigned char)llum;
+			mvprintw(21,0,"2 - Illuminación            (R, G, B) : %i,_,_   ", (int)Rc);
+			//x[5]=""; 
+			fflush(stdin);
+			scanf("%s",x);
+			X = atoi(x);
+			if(X>=0 && X<=255) llum = X;
+			Gc = (unsigned char)llum;
+			mvprintw(21,0,"2 - Illuminación            (R, G, B) : %i, %i,_   ", (int)Rc,(int)Gc);
+			//x[5]=""; 
+			fflush(stdin);
+			scanf("%s",x);
+			X = atoi(x);
+			if(X>=0 && X<=255) llum = X;
+			Bc = (unsigned char)llum;
+			mvprintw(21,0,"2 - Illuminación            (R, G, B) : %i, %i, %i    ", (int)Rc,(int)Gc,(int)Bc);
+		}
+		if(ch == '0' && !bloquejat  && !con_conexion)
+		{
+			mvprintw(23,0,"0 - Umbral                  0 a 100%): -          ");
+			char x[5]=""; 
+			//gets(x);
+			scanf("%s",x);
+			int X = atoi(x);
+			if(X>=0 && X<=100) umbral = X;
+			mvprintw(23,0,"0 - Umbral                  0 a 100%): %f     ", umbral);
+		}
+		if(brightness != brill) // && !bloquejat  && !con_conexion
+		{
+			raspicamcontrol_set_brightness(cam1, brightness);
+			brill = brightness;
+		}
+		if(speed_ms != vel_int ) //&& !bloquejat  && !con_conexion
+		{
+			raspicamcontrol_set_shutter_speed(cam1, speed_ms);
+			vel_int = speed_ms ;
+		}
+		usleep(100000);
+
+	}
+
+}
+
+// -----FONDO GUARDAT (YA DEPRES) -------------------
+void FONDO_GUARDAT(char* ruta3, float* param_gauss)
+{
+	FILE * pFile;
+	long lSize;
+	
+	size_t result;
+
+	if((pFile = fopen ( ruta3 , "rb" ))!=NULL)
+	{
+		if (pFile==NULL) {fputs ("File error",stderr); } //exit (1);
+
+		fseek (pFile , 0 , SEEK_END);
+		lSize = ftell (pFile);
+		rewind (pFile);
+			
+		if (param_gauss == NULL) {fputs ("Memory error",stderr); } //exit (2);
+
+		result = fread (param_gauss ,1,lSize,pFile);
+		if (result != lSize) {fputs ("Reading error",stderr); } //exit (3);
+
+	}
+	fclose(pFile);
+}
+
+// -----------------------------------------------------------------------------
+
+void aprendre(void* camera, float* param_gauss, int* N, int tam_comp, char* ruta1, int N_Experiencies )
+{
+	//CCamera* cam = (CCamera*)camera;
+	int k = 0, i = 0, n, pixel=0;
+	int tamany = WIDTH_F*HEIGHT_F*1;
+
+	//char ruta[100] = "/home/pi/Proces/FONDO/";
+	unsigned char* circul      = (unsigned char*)malloc(tamany);
+	unsigned char *Min_Max     = (unsigned char*) malloc (sizeof(char)*tam_comp*2);
+	float         *Mig         = (float*) malloc(sizeof(float)*tam_comp);
+
+	int Min=0, Max=tam_comp;
+	memset ( param_gauss, 0,sizeof(float)*tam_comp*2 );
+	memset ( N, 0,sizeof(int)*tam_comp );
+	memset ( &Min_Max[Min], 255,sizeof(char)*tam_comp );
+	memset ( &Min_Max[Max],   0,sizeof(char)*tam_comp );
+	memset ( Mig,   127,sizeof(char)*tam_comp );
+
+	//clock_t start;
+	
+	int x0 = WIDTH_F/2, y0=HEIGHT_F/2, r=972;
+
+	int xs,cx,kk,ni=0,N0,N1,XN,Xc,r2=pow(r,2);
+
+	while(k<=N_Experiencies)
+	{
+		//char dir[150]="/home/jk/Documents/COMPRIMIR MOLTS/";
+		//clock_t start = clock();
+		const void* frame_data; int frame_sz;
+		while(!cam->BeginReadFrame(0,frame_data,frame_sz)) {};
+		char* image = (char*)frame_data;
+				N0 = y0-r;
+				if(N0<0) N0=0;
+				kk = N0*WIDTH_F;
+				ni=0;	
+				for( int j2=0; j2<HEIGHT_F; j2++ )
+				{
+					xs=(int)floor(x0-sqrt(r2-pow(r-j2,2)));
+					cx=(int)floor(abs(sqrt(r2 - pow(r-j2,2))));
+					N0=j2*WIDTH_F;
+					N1=N0+WIDTH_F;
+					XN=N0+xs;
+					Xc=XN+2*cx;
+					memcpy(&circul[ni], &image[XN], Xc-XN);
+					ni = ni +Xc-XN;	
+				}
+		//lSize = LLEGIR_IMAGE(dir, fname, (unsigned char*) buffer_k);
+		CALCUL_MIJA_DESVIACIO ( (unsigned char*) circul, N_Experiencies, N, Mig, param_gauss, ni, Min_Max, k, Min, Max );
+		//MOSTRAR_IMAGE ((unsigned char*)image, WIDTH_F, HEIGHT_F, 1);
+		//printf("Tiempo transcurrido: %f\n", (double)(clock() - start) / CLOCKS_PER_SEC);
+		cam->EndReadFrame(0);	
+		k++;
+	}
+	free(Min_Max);
+
+	//printf("Tiempo transcurrido: %f\n", (double)(clock() - start) / CLOCKS_PER_SEC);
+
+	CALCUL_GAUSSIANA ( param_gauss, N, tam_comp, ruta1 );		
+	free(circul);
+
+}
+
+
+// ---------------------------------------------------------------------------------------------------------
+void GET_GAUSS(float * P, char* rut )
+{
+	ifstream file ( rut );
+	string value;
+	float p;
+	int i=0;
+	while ( file.good() )
+	{
+		getline ( file,value, '\n' ); 
+		P[i] = strtof(value.c_str(),0);
+		cout << P[i] << endl; 
+		i++;
+	}
+	file.close();
+	
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+long LLEGIR_IMAGE(char* dir, unsigned char* buffer_k)
+{
+	//char dir[150]="/home/jk/Documents/04_Prova llarga 4rt dia/",direccio3[20]="";
+	//char dir[150]="/home/jk/Documents/05_Segona Proveta 3 dia/",direccio3[20]=""; 
+	//char dir[150]="/home/jk/Documents/COMPRIMIR MOLTS/";
+	char direccio3[20]="";
+	int i;
+
+	stringstream ss;
+	ss.str("");
+	ss << fname;   
+	string direccio2 = ss.str();
+	
+	if(fname<=9) direccio2 = "RASP01_00000"+direccio2;
+	if(fname>9 && fname<=99) direccio2 = "RASP01_0000"+direccio2;
+	if(fname>99 && fname<=999) direccio2 = "RASP01_000"+direccio2;
+	if(fname>999 && fname<=9999) direccio2 = "RASP01_00"+direccio2;
+	if(fname>9999 && fname<=99999) direccio2 = "RASP01_0"+direccio2;
+	if(fname>99999 && fname<=999999) direccio2 = "RASP01_"+direccio2;
+
+	for(i=0;i<50;i++) direccio3[i] = direccio2[i];
+	strcat(dir,direccio3);
+	//strcat(dir,".raw");
+	strcat(dir,".cmpr");
+
+	cout << dir << endl;
+
+	FILE * pFile;
+	long lSize;
+		
+	size_t result;
+
+	if((pFile = fopen ( dir , "rb" ))!=NULL) //dir
+	{
+		if (pFile==NULL) {fputs ("File error",stderr); } //exit (1);
+		// obtain file size:
+		fseek (pFile , 0 , SEEK_END);
+		lSize = ftell (pFile);
+		rewind (pFile);
+		cout << lSize << endl;
+
+		// allocate memory to contain the whole file:
+			
+		if (buffer_k == NULL) {fputs ("Memory error",stderr); } //exit (2);
+
+		// copy the file into the buffer:
+		result = fread (&buffer_k[0],1,lSize,pFile);
+		if (result != lSize) {fputs ("Reading error",stderr); } //exit (3);
+	
+		//if(buffer != NULL) 
+		//Mat M(Size(ample,alt), CV_8UC1,buffer);
+	}
+	fclose (pFile);
+	cout << (int)buffer_k[4000] << (int)buffer_k[10000] << (int)buffer_k[1000000] << (int)buffer_k[500000] << (int)buffer_k[2000000] << endl;
+	return lSize;
+
+}
+
+
+// ------------------------------------------------------------------------------------------------------------------
+
+void CALCUL_MIJA_DESVIACIO (unsigned char* buffer_k, int N_Experiencies, int* N, float* Mig, float* param_gauss, int lSize, unsigned char* Min_Max, int k, int Min, int Max )
+{
+		
+	int pixel =0, n;
+
+	//CALCUL MAXIMS i MINIMS
+	if(k<N_Experiencies/5)
+	{	
+		int valor_pixel;
+		pixel = 0;
+		while( pixel<lSize )
+		{
+			valor_pixel = buffer_k[pixel];
+			if(valor_pixel<Min_Max[Min+pixel]) Min_Max[Min+pixel]=valor_pixel;
+			if( valor_pixel > Min_Max[Max+pixel] )	Min_Max[Max+pixel]=valor_pixel;
+			pixel++;
+		}	
+	}
+		
+	//CALCUL MIJA_UMBRAL
+	if(k==N_Experiencies/5) 
+	{	
+		pixel = 0;
+		while( pixel<lSize )
+		{
+			Mig[pixel] = (Min_Max[Min+pixel]+Min_Max[Max+pixel])*0.6; //0.5 o 0.6 o 0.7...
+			pixel++;
+		}
+				
+	}
+
+	//EXPERIENCIA
+	if(k>N_Experiencies/5)
+	{
+		int valor_pixel;
+		pixel = 0;
+		while( pixel<lSize )  //*(pa+n))
+		{
+			valor_pixel = buffer_k[pixel];
+			//if(valor_pixel>Mig[pixel]) ---------------------------------------
+			{
+				N[pixel]++;
+				n = N[pixel];
+				param_gauss[pixel+lSize] = (float)(param_gauss[pixel+lSize]*(n-1) + valor_pixel)/n;//CALCUL DE LA MIJA
+				param_gauss[pixel] = param_gauss[pixel] + pow(valor_pixel,2); 	//CALCUL DESVIACIO TIPICA
+			}
+			pixel++;
+		}
+	}
+
+	
+	/*
+	//MOSTRAR PER PANTALLA
+	Mat original(Size(ample,alt), CV_8UC1,buffer_k);	
+	char* window_name = "Proces";
+	namedWindow(window_name,0 );
+	moveWindow(window_name, 0, 0);
+	imshow( window_name, original );  //digital
+	cvWaitKey(15); */
+
+}
+
+// --------------------------------------------------------------------------------------------------
+
+void CALCUL_GAUSSIANA ( float* param_gauss, int* N, int tam_comp, char* ruta1 )
+{
+	//CALCUL VARIANÇA
+	int pixel = 0;
+	//start2 = clock();
+	while(pixel<tam_comp)
+	{
+		if(N[pixel]!=0)
+			param_gauss[pixel] = sqrt(param_gauss[pixel]/N[pixel] - pow(param_gauss[tam_comp+pixel],2));
+		else param_gauss[pixel] = -1; // <<<<<----------- ¡¡¡NO HI HAN MOSTRES!!!!
+		pixel++;
+	}
+	//printf("Tiempo Cálculo Varianza: %f\n", (double)(clock() - start2) / CLOCKS_PER_SEC);
+
+
+	// GUARDAR la GAUSSIANA
+	//char ruta1[100]="/home/jk/Documents/analisis/fondo.gss";
+	//strcat(ruta1, ruta);
+	//strcat(ruta1, "fondo.gss");
+	if(1)
+	{
+		FILE *f = fopen(ruta1,"w");
+		if (f == 0) {
+			//printf("************************No he pogut obrir %s\n", ruta1);
+		} else {
+			fwrite(param_gauss,1,sizeof(float)*tam_comp*2,f);
+			fclose(f);
+		}
+	}
+}
+
+
+// --------------------------------------------------------------------------------------------------------
+
+int CALCUL_PROVABILITAT (unsigned char* buffer_k, unsigned char* digital1, float* param_gauss, int tam_comp, int* N, float* P)
+{
+	int k = 0, i = 0, n;
+	int tamany = WIDTH_F*HEIGHT_F*1;
+
+	unsigned char* circul      = (unsigned char*)malloc(tamany);
+
+	int x0 = WIDTH_F/2, y0=HEIGHT_F/2, r=972;
+	int xs,cx,kk,ni=0,N0,N1,XN,Xc,r2=pow(r,2);
+	N0 = y0-r;
+	if(N0<0) N0=0;
+	kk = N0*WIDTH_F;
+	ni=0;	
+	for( int j2=0; j2<HEIGHT_F; j2++ )
+	{
+		xs=(int)floor(x0-sqrt(r2-pow(r-j2,2)));
+		cx=(int)floor(abs(sqrt(r2 - pow(r-j2,2))));
+		N0=j2*WIDTH_F;
+		N1=N0+WIDTH_F;
+		XN=N0+xs;
+		Xc=XN+2*cx;
+		memcpy(&circul[ni], &buffer_k[XN], Xc-XN);
+		ni = ni +Xc-XN;	
+	}
+	//float prv;
+	//fflush( stdin );			
+	//scanf("%f", &prv);
+	float prov =  (float)umbral/100;
+	//cout << prov << endl;
+	int pixel = 0;
+	//int cnt=0;
+	float Z;
+	memset ( digital1, 255,sizeof(char)*tam_comp );
+	//clock_t start = clock();
+	int canvis=0;
+	while(pixel<tam_comp)
+	{					
+		if ( isnan(param_gauss[pixel])) Z=16;
+		else if(  param_gauss[pixel] == -1 || param_gauss[pixel]==0 ) Z=0;    // || N[pixel]==0
+		else Z = (circul[pixel]-param_gauss[tam_comp+pixel])/param_gauss[pixel];
+		if (abs(Z)>16) Z=16;
+
+
+		if (P[(int)abs((Z*100))] <= prov)
+		{
+				digital1[pixel]=circul[pixel];
+				canvis++;
+		}
+		pixel++;
+	}
+	//printf("Tiempo Cálculo Probabilidad: %f\n", (double)(clock() - start) / CLOCKS_PER_SEC);
+	//cout << canvis << endl;
+	free(circul);
+	return canvis;
+
+}
+
+
+// -----------------------------------------------------------------------------------------------
+
+int COMPRESSIO (unsigned char* comprimit, unsigned char* digital1, int canvis, int tam_comp )
+{
+	unsigned int j1=0;
+	int dr=0;
+	int cnt=0;
+	while(j1<tam_comp)
+	{
+		if (digital1[j1] == 255) j1++;
+		else 
+		{
+			comprimit[dr] = (int)(j1 & 16711680)>>16;    //dr+2 8323072
+			comprimit[dr+1] = (int)(j1 & 65280)>>8;      //dr+1
+			comprimit[dr+2] = (int)(j1 & 255);           //dr+0
+			comprimit[dr+4] = digital1[j1];         //dr+4
+
+			cnt=1;
+			j1++;
+			while(digital1[j1] != 255 && cnt<255)
+			{
+				comprimit[dr+4+cnt] = digital1[j1];
+				j1++;
+				cnt++;
+			}
+			//j1++;
+			comprimit[dr+3] = cnt;
+			//cout << " T: " << (int)comprimit[dr+3] << endl;
+			dr = dr + (3+1+cnt);  //tam_comp2 = tam_comp2 + (3+1+cnt);
+			//cout << (bitset<8>)comprimit[dr-3-cnt] << "-" << (bitset<8>)comprimit[dr-2-cnt] << "-" << (bitset<8>)comprimit[dr-1-cnt] << "-" << (int)comprimit[dr-cnt] << endl;
+			//sleep(1);
+		}
+		//cout << "Num Segment: " << segment << "Tam Segment: " << cnt << "Tam Total: " << tam_comp2 << endl;
+	}
+
+	//cout << "Pixels variados: " << canvis << ", Tam Total Comprimido: " << dr << endl;
+	
+	/*
+	if(tam_comp2 > ni)
+	{
+		tam = ni;           // El tamany de la capçalera de l'image
+		memcpy(send_data, actual, tam );
+	}
+	else
+	{
+		tam = tam_comp2;     // El tamany de la capçalera de l'image
+		memcpy(send_data, comprimit, tam );
+	} */
+	return dr;
+}
+
+// ----------------------------------------------------------------------------------------
+
+void DESCOMPRESSIO ( unsigned char* digital1, unsigned char* comprimit, int tam_comp, int tam_comp2 )
+{
+	// Descompressio
+	memset ( digital1, 255,sizeof(char)*tam_comp );
+	unsigned int cabecera=0;
+	//j1=0;
+	//segment=0;
+	int dr=0;
+	int cnt=0;
+	//tam_comp2=0;
+	while(dr<tam_comp2)
+	{
+		cabecera =  (unsigned int)((comprimit[dr] & 255)<<16) + (unsigned int)((comprimit[dr+1] & 255)<<8) + (unsigned int)(comprimit[dr+2] & 255);
+		//cout << "Cabecera: " << cabecera << ", Num Bts: " << (int)comprimit[dr+3] << endl;
+		//sleep(1);
+		cnt=0;
+		while(cnt<=(int)comprimit[dr+3])
+		{
+			digital1[cabecera+cnt] = comprimit[dr+4+cnt];
+			cnt++;
+		}
+		dr=cnt+3+dr;
+		//cout << dr << endl;
+	}
+	//cout << "Tam Total Descomprimido: " << tam_comp2 << endl;
+		
+}
+
+// -----------------------------------------------------------------------------------
+
+void RECONSTRUIR_CIRCUL (unsigned char* digital2, unsigned char* digital1, int ample, int alt)
+{
+	int r=972, y0=972;
+	int xs,cx,k2=0,NUM, Xc, XN, N1,j,i1, x0=1296, r2=pow(r,2);
+	NUM = y0-r;
+	if(NUM<0) NUM=0;
+	i1 = NUM*ample;
+	for( j=0; j<alt; j++ )
+	{
+		xs=(int)floor(x0-abs(sqrt(r2-pow(r-j,2))));
+		cx=(int)floor(abs(sqrt(r2 - pow(r-j,2))));
+		NUM=j*ample;
+		N1=NUM+ample;
+		XN=NUM+xs;
+		Xc=XN+2*cx;
+
+		//for(i1=i1; i1<XN; i1++) data[i1] = 255;
+		memset ( &digital2[i1], 255, XN-i1 );
+		i1 = XN -1;
+		memcpy(&digital2[i1],&digital1[k2],Xc-XN);
+		i1=i1+Xc-XN;
+		k2=k2+Xc-XN;
+		//for(i=Xc; i<N1; i++)	data[i] = 255;
+		memset ( &digital2[i1], 255, N1-i1 );
+		i1 = N1 - 1;
+	}
+	//printf("\nTamany de mensage reconstruit:  %i\n",i1);
+}
+
+// ---- ---------------------------------------------------------------------
+
+void MOSTRAR_IMAGE (unsigned char* digital2, int ample, int alt, int colors)
+{
+	if(colors==1)
+	{
+		Mat dig(Size(ample,alt), CV_8UC1, digital2);
+		char* window_name = "Proces";
+		namedWindow(window_name,0 );
+		moveWindow(window_name, 0, 0);
+		imshow( window_name, dig );
+		cvWaitKey(15);
+	}
+	if(colors==3)
+	{
+		Mat dig(Size(ample,alt), CV_8UC3, digital2);
+		char* window_name = "Proces";
+		namedWindow(window_name,0 );
+		moveWindow(window_name, 0, 0);
+		imshow( window_name, dig );
+		cvWaitKey(15);
+	}
+	if(colors==4)
+	{
+		Mat dig(Size(ample,alt), CV_8UC4, digital2);
+		char* window_name = "Proces";
+		namedWindow(window_name,0 );
+		moveWindow(window_name, 0, 0);
+		imshow( window_name, dig );
+		cvWaitKey(15);
+	}
+}
+
+/*********************************************************
+Genera un nom d'archiu a partir d'un conte sequencial
+**********************************************************/
+void GEN_NOM ( int numero, char* nombre )
+{
+
+	stringstream conversora4;
+	conversora4.str("");
+	conversora4 << numero;
+	string NOM1 = conversora4.str();
+
+	if(numero>=    0 && numero<        10) NOM1 = "00000" + NOM1 + ".bmp";
+	if(numero>      9 && numero<      100) NOM1 = "0000" + NOM1   + ".bmp";
+	if(numero>    99 && numero<    1000) NOM1 = "000" + NOM1     + ".bmp";
+	if(numero>  999 && numero<  10000) NOM1 = "00" + NOM1       + ".bmp";
+	if(numero>9999 && numero<100000) NOM1 = "0" + NOM1         + ".bmp";
+
+	int kt = NOM1.size(); 
+	for(int k = 0; k < kt ; k++) nombre[k]=NOM1[k];
+
+}
+
+void GEN_RUTA ( char* direccio_gen, char* nom_carpeta, int numero )
+{
+	char ruta_gen[50];
+
+	stringstream conversora4;
+	conversora4.str("");
+	conversora4 << numero;
+	string NOM1 = conversora4.str();
+	if(fname>=0 && fname<10) NOM1 = "00000" + NOM1 + ".frm";
+	if(fname>9 && fname<100) NOM1 = "0000" + NOM1 + ".frm";
+	if(fname>99 && fname<1000) NOM1 = "000" + NOM1 + ".frm";
+	if(fname>999 && fname<10000) NOM1 = "00" + NOM1 + ".frm";
+	if(fname>9999 && fname<100000) NOM1 = "0" + NOM1 + ".frm";
+	int kt = NOM1.size(); 
+	for(int k = 0; k < kt ; k++) ruta_gen[k]=NOM1[k];
+
+
+	//strcpy(direccio_gen, ruta_gen );
+	//memcpy(&direccio_gen, &c,49);
+
+	
+
+}
+
+void GUARDAR (unsigned char* data, int TAM)
+{
+
+	char dir[150]="", NOM_1[15]="";
+	strcpy(NOM_1,NOM);
+	strcpy(dir,sub_dir);
+	strcat(dir,"video/");
+	strcat(dir,NOM_1);
+
+			mvprintw(12,0,"---- %s ", dir);
+
+	//Guardar en RAW
+	FILE *f = fopen("/home/pi/23.raw","w"); //FILE *f = fopen(dir,"w");
+	if (f == 0)
+	{
+		//printf("No he pogut obrir %s\n", NOM);
+	}
+	else
+	{
+		fwrite(data,1,TAM,f);   //fwrite(image_reb,1,tam_reb,f);
+		fclose(f);
+	}
+
+}
+
+//--- CREAR SISTEMA D'ARCHIUS --------------------------
+bool CREAR_PROYECTE(void)
+{
+//	char YN;
+	mvprintw(12,0,"---->  Empezar (S) o Abortar (A)?                        ");
+	
+	//CREAR CARPETES
+	mkdir(direccio, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
+	strcpy (sub_dir,direccio);
+	strcat (sub_dir,nom_proyecte);
+	strcat (sub_dir,"/");
+/*
+	struct stat datos_proyecte;
+	if( lstat(sub_dir, &datos_proyecte)!=-1 )
+	{
+		mvprintw(12,0,"---- YA EXISTE. Desea REESCRIBIRLO?: (Y/N)                        ");	
+		cin >> YN;
+	}
+	else if ( (lstat(sub_dir, &datos_proyecte)==-1) || YN == 'Y' || YN == 'y' )
+	{	
+*/		mvprintw(12,0,"----                                                      ");
+		mkdir(sub_dir, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
+
+				mvprintw(9,0,"---- %s                ", sub_dir);
+
+		char video_carp[150]="";
+		strcpy ( video_carp, sub_dir );
+		strcat ( video_carp,"video/");
+		mkdir(video_carp, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
+
+		//CREAR ARCHIU .TXT DE CONFIGURACIO
+		char NOM_txt[20]="";
+		char dir_txt[150]="";
+		strcpy (NOM_txt, nom_proyecte);
+		strcat (NOM_txt, ".txt");
+		strcpy (dir_txt, sub_dir);
+		strcat (dir_txt, NOM_txt);
+
+				mvprintw(10,0,"---- %s                  ", dir_txt);
+
+		ofstream myfile (dir_txt);
+		if (myfile.is_open())
+		{   //int Rc=255, Gc=255, Bc=0, ref_temp=21, brightness=20, fps=3, fondo=0, speed_ms=100000, selected_texture = 2;
+			myfile << "..... Analisis del comportamiento de C-Elegans .....\n";
+			myfile << "Nombre de test        :" << nom_proyecte << "\n";
+			myfile << "Fecha                 :" << selected_texture << "\n";
+			myfile << "Dirección del archivo :" << direccio << "\n";
+			myfile << "Número archivos OK    :" << selected_texture << "\n";
+			myfile << "Número archivos FAIL  :" << selected_texture << "\n";
+			myfile << "Ancho imagen          :" << WIDTH_F << "\n";
+			myfile << "Alto imagen           :" << HEIGHT_F << "\n";
+			myfile << "Colores               :" << selected_texture << "\n";		
+			myfile << "Tiempo inicio         :" << selected_texture << "\n";
+			myfile << "Tiempo fin            :" << selected_texture << "\n";
+			myfile << "Imágenes por segundo  :" << fps << "\n";
+			myfile << "Extensión/Formato     :" << selected_texture << "\n";
+			myfile << "Compresión            :" << selected_texture << "\n";
+			myfile << "Color iluminación     :" << Rc << ", " << Gc << ", " << Bc << ", " << fondo << "\n";
+			myfile << "Brillo                :" << brightness << "\n";
+			myfile << "Tiempo opturador      :" << speed_ms << "\n";
+			myfile.close();
+		}
+		else
+		{
+			cout << "Unable to open file";
+		}
+		return 1;
+/*	}
+	else
+	{
+		mvprintw(12,0,"----                                       ");
+		return 0;
+	}*/
+}
+
+bool EXISTIX_PROYECTE(void)
+{
+	strcpy (sub_dir,direccio);
+	strcat (sub_dir,nom_proyecte);
+	strcat (sub_dir,"/");
+	struct stat datos_proyecte;
+	if( lstat(sub_dir, &datos_proyecte)!=-1 ) return 1;
+	else return 0;
+
+}
+
+/***********************************************************************
+Funciones para crear carpetas
+************************************************************************/
+bool existe(char nombre[])
+{
+    struct stat datos_proyecte;
+    if( lstat(nombre, &datos_proyecte)!=-1 ) return 1;
+    else return 0;
+
+}
+
+string C2S(char i)
+{
+    ostringstream ss;
+    ss << i;
+    return ss.str();
+}
+
+string AC2S(char i[])
+{
+    ostringstream ss;
+    ss << i;
+    return ss.str();
+}
+
+
+
+void generar_carpeta (char *generada1, char *generada2, char nombre[], int dia, char condicion, int probeta )
+{
+
+    string generar1 = AC2S(nombre) + "/dia_"+ I2S(dia) + "/cond_" + C2S(condicion) + "/placa_" + I2S(probeta)  + "/" + '\0';
+    string generar2 = AC2S(nombre) + "/dia_"+ I2S(dia) + "/cond_" + C2S(condicion) + "/placa_" + I2S(probeta+1)+ "/" + '\0';
+
+    for(int k=0; k<generar1.size(); k++) generada1[k]=generar1[k];
+    for(int k=0; k<generar2.size(); k++) generada2[k]=generar2[k];
+
+}
+
+void generar_ruta_completa (char *ruta_completa, char raiz[], char generada[])
+{
+    string generar = AC2S(raiz) + AC2S(generada);
+    for(int k=0; k<generar.size(); k++) ruta_completa[k]=generar[k];
+}
+
+bool crear_carpeta (char generada[])
+{
+    char crea[150]="";
+    int ki= 0;
+    for (int k=0; generada[k]!='\0'; k++)
+    {
+        crea[k]= generada[k];
+
+        if(generada[k]=='/')
+        {
+            crea[k]= '\0';
+            mkdir(crea, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
+            crea[k]= generada[k];
+        }
+    }
+    return true;
+}
+
+string I2S(int i)
+{
+    ostringstream ss;
+    ss << i;
+    return ss.str();
+}
+
+string F2S(float i)
+{
+    ostringstream ss;
+    ss << i;
+    return ss.str();
+}

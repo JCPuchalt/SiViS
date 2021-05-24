@@ -1,0 +1,172 @@
+#pragma once
+
+#include "../biopolis/llibreries/llibreries.hpp"
+#include "GLES2/gl2.h"
+#include "EGL/egl.h"
+#include "EGL/eglext.h"
+#include "lodepng.h"
+#include <opencv/cv.h> 
+#include <opencv2/opencv.hpp>
+
+using namespace cv;
+using namespace std;
+
+void CE_InitCameras();
+void CE_StopCameras();
+
+/********************************************************************
+Sistemes de Visio
+*********************************************************************/
+class sistema_visio
+{
+	const char* ruta_rail;
+	const char* ruta_proyecte;
+	const char* ruta_dia;
+	const char* ruta_proveta;
+	const char* ruta_video;
+	const char* ruta_homography;
+
+	int SV_Id;
+	int CNTA, It_Erro;
+	int Iteracions_Compensacio;
+	int Iteracions_Imagens_Guardades;
+	float corregir_x, corregir_y;
+	float minim_error_compensacio;
+	float mija_error_compensacio;
+    float MET_Ant; // Mija Error Total Anterior (Compensacio)
+    bool min_found;
+    float alpha;
+
+	//Variables d'Estat
+	bool resultat_calibracio;	int estat_calibracio;
+	bool resultat_enviament;	int estat_enviament;
+	bool resultat_guardar;		int estat_guardar;
+	bool reset_comp;
+
+	GfxTexture pantalla_grey, actual_tex, rgb_tex;
+	GfxTexture mostrar_tex, rgbtextures;
+
+	int *tabla_calibracion;
+	unsigned char* quadrat;
+	unsigned char* circul;
+	int TAM;
+	unsigned char *image_desti;
+	unsigned char *vector_mostrar_ant;
+	unsigned char *vector_mostrar_minim_error;
+
+	public:
+	sistema_visio();
+	~sistema_visio() {}
+
+	int GetId					(void) 	{ return SV_Id; }
+	void SetId				(int id) 	{SV_Id=id; }
+
+	void Sum_It_Comp		(void)	{Iteracions_Compensacio++;}
+	int   Get_It_Comp			(void) 	{return Iteracions_Compensacio;}
+        void Init_It_Comp			(void)          {Iteracions_Compensacio=1;}
+
+	void Sum_It_Imagens		(void)              {Iteracions_Imagens_Guardades++;}
+	int   Get_It_Imagens		(void)          {return Iteracions_Imagens_Guardades;}
+	void Init_It_Imagens		(void)          {Iteracions_Imagens_Guardades=0;}
+
+        bool Get_min_found          (void)          {return min_found;}
+        void Set_min_found          (bool found)    { min_found=found;}
+
+	float Get_Minim_Erro        (void)          { return minim_error_compensacio; }
+	void  Set_Minim_Erro        (float minim)   { minim_error_compensacio=minim; }
+	void  Init_Erro_Minim       (void)          { minim_error_compensacio=1000.0; }
+
+	float Get_Mija_Erro        (void)          { return mija_error_compensacio; }
+	void  Set_Mija_Erro        (float minim)   { mija_error_compensacio=minim; }
+        void  Init_Erro_Mija       (void)          { mija_error_compensacio=0.0; }
+
+        float Get_alpha        (void)             { return alpha; }
+        void  Set_alpha        (float x)          { alpha=x; }
+        void  Init_alpha       (void)             { alpha=0; }
+
+        float Get_MET_Ant        (void)          { return MET_Ant; }
+        void  Set_MET_Ant        (float x)       { MET_Ant=x; }
+        void  Init_MET_Ant       (void)          { MET_Ant=0.0; }
+
+	float Get_It_Error        (void)          { return It_Erro; }
+	void  Inc_It_Error        (void)          { It_Erro++; }
+	void  Init_It_Error       (void)          { It_Erro=0; }
+	void Set_Reset_Comp 	  (bool valor)	  {reset_comp=valor;}
+	bool Get_Reset_Comp 	  (void)	  {return reset_comp;}
+
+
+	GfxTexture* Get_Textura	(void)			{return &mostrar_tex;}
+	unsigned char* Get_Vect_Im(void)			{return quadrat;}
+        unsigned char* Get_Circulo(void)			{return circul;}
+        int  Get_TAM(void)                           {return TAM;}
+        void Set_TAM(int x)                           { TAM=x; }
+	unsigned char* Get_Vect_Compensada(void) 	{ return vector_mostrar_ant; }
+	unsigned char* Get_Vect_Opt_Comp (void)  	{ return vector_mostrar_minim_error; }
+	int* Get_Tabla_Calibracion (void)  			{ return tabla_calibracion; }
+
+	bool Init						(void);
+	bool Seleccio_CAM			(void);
+	bool CE_Calibrar				(void);
+	bool CE_Capturar				(void);
+	bool CE_Compensar			( sistema_visio* sPVx );
+        bool CE_Compensar_Rapido	( sistema_visio *SV1, sistema_visio *SV2 );
+	bool CE_Mostrar 				(int MOSTRAR_TEX);
+	void Init_Textura_Groc 		(void);
+        void Init_Textura       		(int cntT);
+
+		int    Get_Estat_Calibracio		(void)		{ return estat_calibracio; }
+		void Set_Estat_Calibracio		(int estat) 	{ estat_calibracio=estat; }
+		int    Get_Resultat_Calibracio	(void)		{ return resultat_calibracio; }
+		void Set_Resultat_Calibracio	(int resultat) 	{ resultat_calibracio=resultat; }
+
+		int    Get_Estat_Enviament		(void)		{ return estat_enviament; }
+		void Set_Estat_Enviament		(int estat) 	{ estat_enviament=estat; }
+		int    Get_Resultat_Enviament	(void)		{ return resultat_enviament; }
+		void Set_Resultat_Enviament	(int resultat) 	{ resultat_enviament=resultat; }
+
+		int    Get_Estat_Guardar		(void)		{ return estat_guardar; }
+		void Set_Estat_Guardar		(int estat) 	{ estat_guardar=estat; }
+		int    Get_Resultat_Guardar		(void)		{ return resultat_guardar; }
+		void Set_Resultat_Guardar		(int resultat) 	{ resultat_guardar=resultat; }
+
+
+		bool ce_get_ruta_rail		(const char* ruta_rail);
+		bool ce_get_ruta_proyecte	(const char* ruta_proyecte);
+		bool ce_get_ruta_dia		(const char* ruta_dia);
+		bool ce_get_ruta_proveta	(const char* ruta_proveta);
+		bool ce_get_ruta_video 	(const char* ruta_video);
+		bool ce_set_ruta_rail  		(const char* ruta_rail);
+		bool ce_set_ruta_proyecte	(const char* ruta_proyecte);
+		bool ce_set_ruta_dia		(const char* ruta_dia);
+		bool ce_set_ruta_proveta 	(const char* ruta_proveta);
+		bool ce_set_ruta_video 	(const char* ruta_video);
+
+		//bool camara_configuracion( fps, shutter_speed, brightness);
+
+};
+
+
+void  MOSTRAR_Regim_permanent	(sistema_visio *SV1, sistema_visio *SV2);
+void* Reproduir_Audio 			( void* );
+void* Conexion_Servidor 			( void* SistVis);
+void* CE_Guardar 					( void* SistVis );
+int   getdir                        (string dir, vector<string> &files);
+static struct udev_device* get_child(struct udev* udev, struct udev_device* parent, const char* subsystem);
+static void enumerate_usb_mass_storage(struct udev* udev);
+void*  USB_thread                   ( void* );
+
+
+/********************************************************************
+Variables d'Estat (Variables Generals per a la pressa de decissions)
+*********************************************************************/
+class estat
+{
+	bool parla;
+
+	long int start_time;
+
+	public:
+		estat();
+		~estat() {}
+};
+

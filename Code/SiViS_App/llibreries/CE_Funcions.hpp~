@@ -1,0 +1,57 @@
+#pragma once
+
+#include "llibreries.hpp"
+
+//unsigned char* inv_quadrat = (unsigned char*) malloc(sizeof(char)*1944*1944);
+void  find_white_pixels  (unsigned char* image, int ample, int alt, ofstream& centroide,  ofstream& punt_image, float pantalla_x, float pantalla_y);
+void  test_calibracion2  (unsigned char* image, int ample, int alt, ofstream& arch_error, ofstream& punt_image, float pantalla_x, float pantalla_y, float* corregir_x, float* corregir_y, GfxTexture* tex_filtrada);
+void  test_calibracion   (unsigned char* image, int ample, int alt, ofstream& centroide, ofstream& punt_image, float pantalla_x, float pantalla_y, float* corregir_x, float* corregir_y, GfxTexture* tex_filtrada);
+float error_compensacion (unsigned char* image, int ample, int alt,  float referencia, ofstream& archiu_error);
+float error_compensacion_rapit (unsigned char* image, unsigned char* patro_circul, int ample, int alt,  float referencia, ofstream& archiu_error, int iteracion);
+
+void aprendre              (void* camera, float* param_gauss, int* N, int tam_comp, char* ruta1, int N_Experiencies );
+void GET_GAUSS             (float * P, char* rut );
+void FONDO_GUARDAT	   (char* ruta3, float* param_gauss);
+long LLEGIR_IMAGE          (char* dir, unsigned char* buffer_k);
+void CALCUL_MIJA_DESVIACIO (unsigned char* buffer_k, int N_Experiencies, int* N, float* Mig, float* param_gauss, int lSize, unsigned char* Min_Max, int k, int Min, int Max );
+void CALCUL_GAUSSIANA      (float* param_gauss, int* N, int tam_comp, char* ruta1 );
+int  CALCUL_PROVABILITAT   (unsigned char* buffer_k, unsigned char* digital1, float* param_gauss, int tam_comp, int* N, float* P );
+int  COMPRESSIO            (unsigned char* comprimit, unsigned char* digital1, int canvis, int tam_comp); // , int* N, float* P );
+void DESCOMPRESSIO         (unsigned char* digital1, unsigned char* comprimit, int tam_comp, int tam_comp2 );
+void RECONSTRUIR_CIRCUL    (unsigned char* digital2, unsigned char* digital1, int ample, int alt);
+void MOSTRAR_IMAGE         (unsigned char* digital2, int ample, int alt, int colors);
+int CIRCUL		   (unsigned char* circul, unsigned char* image);
+int QUADRAT 		   (unsigned char* quadrat, unsigned char* image);
+int Configuracio_Remota	( int sock, int TAM, float temperatura);
+int  ENVIAR_IMAGE          (char* image, int socket, int TAM, float temperatura );  //const uint8_t*
+void* config_cam           (void* camera);
+void GUARDAR 		   (unsigned char* dada, int TAM);
+void GEN_NOM 			( int numero, char* nombre[] );
+void GEN_RUTA		   ( char* direccio_gen, char* nom_carpeta, int numero );
+void* CAPTURA_IMAGEN	   (void* dat);
+bool EXISTIX_PROYECTE	   (void);
+bool CREAR_PROYECTE	   (void);
+float temp		   (int fd);
+int Matriu_TransIComp_CPU (unsigned char* image_actual, unsigned char* image_desti, GfxTexture* mostrar_tex, int* tabla_calibracion, int cntT);
+bool Matriu_Transformacio_CPU           (GfxTexture* pantalla_tex, GfxTexture* mostrar_tex,  int SV_Id);
+int  Calcul_Matriu_Transformacio_CPU     (GfxTexture* pantalla_tex, GfxTexture* mostrar_tex, int* tabla_calibracion,  int SV_Id);
+int Calcul_Matriu_Transformacio_CPU_Vector (unsigned char* vector_pantalla, GfxTexture* mostrar_tex, int* tabla_calibracion, int SV_Id );
+bool Matriu_Transformacio_CPU_tables    (unsigned char* image, GfxTexture* mostrar_tex, int* tabla_calibracion, int cnt);
+void calibracion_antonio   		(unsigned char* image, GfxTexture* tex_filtrada, float* corregir_x , float* corregir_y,  int SV_Id );
+bool calibracion_inversa_antonio      (unsigned char* image, GfxTexture* tex_filtrada, float* corregir_x , float* corregir_y,  int SV_Id );
+void compensar_CPU  (unsigned char* image_actual, unsigned char* image_auxiliar, unsigned char* mostrar);
+void test_calibracion_antonio(unsigned char* image, GfxTexture* tex_filtrada, float* corregir_x, float* corregir_y );
+static double computeReprojectionErrorsH(const vector<Point2f>& imagePoints, const vector<Point2f>& displayPoints, const Mat& dHi, float* corregir_x, float* corregir_y);
+static void loadHomographyParams		(Mat& dHi, int SV_Id);
+static void loadCorrectorParams(Mat& dHi, int SV_Id);
+static void saveHomographyParams(vector<Point2f> displayPoints, vector<Point2f> imagePoints, Mat dHi, double displayPointsErr, int SV_Id);
+static void saveInverseHomographyParams(vector<Point2f> displayPoints, vector<Point2f> imagePoints, Mat dHi, double displayPointsErr, int SV_Id);
+static void loadHomographyInverseParams(Mat& dHi, int SV_Id);
+void COMPENSAR (GfxTexture* pantalla);
+
+string int2string (int sancer);
+string float2string (float sancer);
+string NOM_000X ( int sequencia);
+
+void Inicia_Temporisador(void);
+double Medix_temps (void);

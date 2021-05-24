@@ -1,0 +1,4162 @@
+#pragma once
+
+#include "../llibreries/llibreries.hpp"
+#include "../llibreries/sistema_visio.hpp"
+
+#ifdef _DEBUG    
+#pragma comment(lib, "opencv_core246d.lib")     
+#pragma comment(lib, "opencv_imgproc246d.lib")   //MAT processing    
+#pragma comment(lib, "opencv_highgui246d.lib")    
+#pragma comment(lib, "opencv_stitching246d.lib");  
+  
+#else    
+#pragma comment(lib, "opencv_core246.lib")    
+#pragma comment(lib, "opencv_imgproc246.lib")    
+#pragma comment(lib, "opencv_highgui246.lib")    
+#pragma comment(lib, "opencv_stitching246.lib");  
+#endif  
+
+using namespace cv;
+using namespace std;
+
+/*
+float puntos_pantalla[28*2][2]=
+{
+
+			     {0, 0}, {42*1*texelRatio, 7*42},	{0, 0}, {42*3*texelRatio, 7*42}, 	   {0, 0}, {42*5*texelRatio,  7*42},   {0, 0},
+	{0, 42*6}, 	     {0, 0}, {42*2*texelRatio, 6*42}, 	{0, 0}, {42*4*texelRatio, 6*42}, 	   {0, 0}, {42*6*texelRatio,  6*42},
+	
+			     {0, 0}, {42*1*texelRatio, 5*42},	{0, 0}, {42*3*texelRatio, 5*42}, 	   {0, 0}, {42*5*texelRatio,  5*42},   {0, 0},
+	{0, 42*4}, 	     {0, 0}, {42*2*texelRatio, 4*42}, 	{0, 0}, {42*4*texelRatio, 4*42}, 	   {0, 0}, {42*6*texelRatio,  4*42},
+			     {0, 0}, {42*1*texelRatio, 3*42}, 	{0, 0}, {42*3*texelRatio, 3*42}, 	   {0, 0}, {42*5*texelRatio,  3*42},   {0, 0},
+	{0, 42*2},  	     {0, 0}, {42*2*texelRatio, 2*42},  	{0, 0}, {42*4*texelRatio, 2*42}, 	   {0, 0}, {42*6*texelRatio,  2*42},
+			     {0, 0}, {42*1*texelRatio,   42}, 	{0, 0}, {42*3*texelRatio, 1*42}, 	   {0, 0}, {42*5*texelRatio,  1*42},   {0, 0},
+	{0,   0}, 	     {0, 0}, {42*2*texelRatio,    0}, 	{0, 0}, {42*4*texelRatio,    0}, 	   {0, 0}, {42*6*texelRatio,     0}
+
+
+}; */
+
+float puntos_pantalla[90][2]=
+{
+	//		     {0, 0}, {42*1*texelRatio, 9*42},	{0, 0}, {42*3*texelRatio, 9*42}, 	{0, 0}, {42*5*texelRatio,  9*42},   {0, 0},  {42*7*texelRatio,  9*42},   {0, 0},
+	//{0, 42*8}, 	     {0, 0}, {42*2*texelRatio, 8*42}, 	{0, 0}, {42*4*texelRatio, 8*42},	{0, 0}, {42*6*texelRatio,  8*42},   {0, 0},  {42*8*texelRatio,  8*42},
+
+			     {0, 0}, {42*1*texelRatio, 7*42},	{0, 0}, {42*3*texelRatio, 7*42}, 	{0, 0}, {42*5*texelRatio,  7*42},   {0, 0},  {42*7*texelRatio,  7*42},   {0, 0},  {42*9*texelRatio,   7*42},   {0, 0},
+	{0, 42*6}, 	     {0, 0}, {42*2*texelRatio, 6*42}, 	{0, 0}, {42*4*texelRatio, 6*42}, 	{0, 0}, {42*6*texelRatio,  6*42},   {0, 0},  {42*8*texelRatio,  6*42},   {0, 0},  {42*10*texelRatio,  6*42},
+	
+			     {0, 0}, {42*1*texelRatio, 5*42},	{0, 0}, {42*3*texelRatio, 5*42},	{0, 0}, {42*5*texelRatio,  5*42},   {0, 0},  {42*7*texelRatio,  5*42},   {0, 0},  {42*9*texelRatio,   5*42},   {0, 0},
+	{0, 42*4}, 	     {0, 0}, {42*2*texelRatio, 4*42}, 	{0, 0}, {42*4*texelRatio, 4*42},	{0, 0}, {42*6*texelRatio,  4*42},   {0, 0},  {42*8*texelRatio,  4*42},   {0, 0},  {42*10*texelRatio,  4*42},
+
+			     {0, 0}, {42*1*texelRatio, 3*42}, 	{0, 0}, {42*3*texelRatio, 3*42},	{0, 0}, {42*5*texelRatio,  3*42},   {0, 0},  {42*7*texelRatio,  3*42},   {0, 0},  {42*9*texelRatio,   3*42},   {0, 0},
+	{0, 42*2},  	     {0, 0}, {42*2*texelRatio, 2*42},  	{0, 0}, {42*4*texelRatio, 2*42},	{0, 0}, {42*6*texelRatio,  2*42},   {0, 0},  {42*8*texelRatio,  2*42},   {0, 0},  {42*10*texelRatio,  2*42},
+
+			     {0, 0}, {42*1*texelRatio,   42}, 	{0, 0}, {42*3*texelRatio, 1*42},	{0, 0}, {42*5*texelRatio,  1*42},   {0, 0},  {42*7*texelRatio,  1*42}, 	 {0, 0},  {42*9*texelRatio,   1*42},   {0, 0},
+	{0,    0}, 	     {0, 0}, {42*2*texelRatio,    0}, 	{0, 0}, {42*4*texelRatio,    0},	{0, 0}, {42*6*texelRatio,     0},   {0, 0},  {42*8*texelRatio,     0},   {0, 0},  {42*10*texelRatio,     0}                     
+
+};
+
+
+/***************************************************************************************
+Constructuor de Clase: "sistema_visio". Inicio de clase. Crea, inicializa... variables
+****************************************************************************************/
+sistema_visio::sistema_visio(int id, int conf, int num_cam, int configPort[], Display* disp, int cicles)
+{
+	con_conexion=false; conectat=false;   proyecte_nou=false;    bloquejat=false;
+	G_Local=true;       enviar=false;     capturando=false;      inici_local=false;
+	inici_remot=false;  iniciat=false;    proyecto_creado=false; abortar=false;
+	fin_captura=false;  apagar_RPI=false;
+
+	//fusionada	= (unsigned char*) malloc (sizeof(char)      * WIDTH_FRAME*HEIGHT_FRAME*4);
+
+	numMuestras=30;
+
+	idSV=id;
+	config=conf;
+	display=disp;
+	num_camaras = num_cam;
+	CICLES=cicles;
+
+	strcpy(ruta_tablaCalibracionFusion    , "./configuracio/tablaCalibracionFusion");
+	crear_ruta_tablaCalibracionFusion();
+
+	strcpy(ruta_tablaInterseccion    , "./configuracio/tablaInterseccion");
+	crear_ruta_tablaInterseccion();
+
+	strcpy(ruta_idCAMARA    , "./configuracio/idCAMARA");
+	crear_ruta_idCAMARA();
+
+	buffer = new bufferCircular;
+
+	ImagenDisplayVector  = display->pImagenDisplayVector();
+	ImagenDisplayTextura = display->pImagenDisplayTextura();
+
+	codicImage=0;
+	memcpy(numPort, configPort, 4*sizeof(int));
+
+	imagen   = (unsigned char*) malloc (sizeof(char) * WIDTH_FRAME * HEIGHT_FRAME * num_cam);
+	evaluado = (unsigned char*) malloc (sizeof(char) * WIDTH_FRAME * HEIGHT_FRAME * num_cam);
+	memset ( evaluado, 0, sizeof(char) * WIDTH_FRAME * HEIGHT_FRAME * num_cam );
+
+
+	tabla_calibracionFusionInversa = (long int*) malloc (sizeof(long int) * WIDTH_FRAME * HEIGHT_FRAME * num_cam * 2);
+	memset ( tabla_calibracionFusionInversa, 0, sizeof(long int) * WIDTH_FRAME * HEIGHT_FRAME * num_cam * 2);
+
+
+	//tabla_calibracionFusionInversa1 = (long int*) malloc (sizeof(long int) * WIDTH_FRAME * HEIGHT_FRAME * num_cam * 2);
+	//memset ( tabla_calibracionFusionInversa1, 0, sizeof(long int) * WIDTH_FRAME * HEIGHT_FRAME * num_cam * 2);
+
+	//tabla_calibracionFusionInversa2 = (long int*) malloc (sizeof(long int) * WIDTH_FRAME * HEIGHT_FRAME * num_cam * 2);
+	//memset ( tabla_calibracionFusionInversa2, 0, sizeof(long int) * WIDTH_FRAME * HEIGHT_FRAME * num_cam * 2);
+
+	idCAMARA = (unsigned char*) malloc (sizeof(char) * WIDTH_FRAME * HEIGHT_FRAME * num_cam * 2);
+	memset ( idCAMARA, 0, sizeof(char) * WIDTH_FRAME * HEIGHT_FRAME * num_cam * 2);
+
+
+	tabla_Interseccion = (int*) malloc ( sizeof(int) * WIDTH_PANT * HEIGHT_PANT * num_cam );
+	memset ( tabla_Interseccion, 0, sizeof(int) * WIDTH_PANT * HEIGHT_PANT * num_cam );
+
+
+	detectadaInterseccion = (unsigned char*) malloc ( sizeof(char) * WIDTH_PANT * HEIGHT_PANT * num_cam * 4);
+	memset ( detectadaInterseccion, 0, sizeof(char) * WIDTH_PANT * HEIGHT_PANT * num_cam * 4);
+
+
+			//pin  7,11,12
+	int portMUX[4][3]={   {0, 0, 1},   //PORT CAM1
+			      {1, 0, 1},   //PORT CAM2
+			      {0, 1, 0},   //PORT CAM3
+			      {1, 1, 0} }; //PORT CAM4
+
+
+	CAM = new camara[num_camaras];
+
+	texturaColor(0,0,0 );
+	display->dibuixar();
+	
+
+	for (int i=0; i<num_camaras; i++)
+	{	
+		int nPort = numPort[i];
+
+		CAM[i].SetId(i+1);
+		CAM[i].setDisplay(display);
+		CAM[i].pEvaluado(evaluado);
+		CAM[i].pDetectarInterseccion(detectadaInterseccion);
+		
+		CAM[i].setCaracteristicas(num_cam, idSV, nPort, config);
+
+		CAM[i].setPort ( portMUX[nPort-1][0], portMUX[nPort-1][1], portMUX[nPort-1][2]);
+
+		CAM[i].crear_ruta_homografia();
+		CAM[i].crear_ruta_patron();
+		CAM[i].crear_ruta_tablaCalibracion();
+		CAM[i].crear_ruta_homografiaPlanoPlaca();
+		CAM[i].loadPatron();
+
+		if(1)
+		{
+			if( CAM[i].CE_Calibrar() )
+				cout << "Calibrada: " << i+1 << endl << endl;
+				//-----parla=true;
+		}
+	}
+	
+
+	cout << "TAM:::: " << numeric_limits<int>::min() << endl;
+	cout << "TAM:::: " << numeric_limits<int>::max() << endl;
+
+	cout << "TAM:::: " << sizeof(int) << endl;
+	cout << "TAM:::: " << sizeof(long int) << endl;
+
+
+	detectarInterseccionesX2();
+	//detectarInterseccionesX4();
+
+	// ---------------*****************----------------------------------------
+	cout << "NO GUSTAR" << endl;
+	memset ( detectadaInterseccion, 0, sizeof(char) * WIDTH_PANT * HEIGHT_PANT * 2 * 4);
+
+
+//	if( (calibrada && recalibrar) || !existeArchivo )
+	{
+		for (int i=0; i<num_camaras; i++)
+		{
+			CAM[i].Calculo_Tabla_Calibracion();
+			CAM[i].Init_Textura();
+		}
+
+		cout << "Creando tabla para los pixeles de interseccion" << endl;
+		//calculoPixelesIntersectados();
+	}
+
+
+
+/*
+	// Comprobar si tiene que Calibrar
+	int calibra = 0;
+	for (int i=0; i<num_camaras; i++)
+		calibra+=(int)(!CAM[i].ExisteTabla())+(int)CAM[i].isRecalibrada();
+
+*/
+	//if (calibra)
+//		calibracioDeFussio();
+	//else
+		
+
+	
+//	if(!recalibrar)
+	{
+		for (int i=0; i<num_camaras; i++)
+			CAM[i].loadTablaCalibracion();
+		loadTablaInterseccion();
+		loadTablaFusionInversa();
+	}
+
+	/*
+	if(idSV==2)
+	{
+		int OrigeEnx=30,OrigeEny=50,AmpleQuadrat=350,AltQuadrat=350;
+		display->posarQuadrat( OrigeEnx, OrigeEny, AmpleQuadrat, AltQuadrat );
+		display->dibuixar();
+	}*/
+
+	// Crear Una conexio al Servidor. Per a cada Sistema de Visio
+	pthread_t conexion_id;
+	pthread_create(&conexion_id, NULL, Conexion_Servidor, this );
+
+	// Crear un thread para guardar las imágenes
+	pthread_t grabar_id;
+	pthread_create(&grabar_id, NULL, CE_Guardar, this );
+
+	pthread_t servidorRASP_id;
+	pthread_create(&servidorRASP_id, NULL, servidorRASPBERRY, this );
+}
+
+
+/*********************************************************
+Proceso
+**********************************************************/
+void sistema_visio::proceso(void)
+{	
+	display->dibuixar();
+	struct timespec t0 = Inicia_Temporisador();
+	for (int iC=0; iC < num_camaras; iC++)
+	{	
+			//if(!CAM[iC].found_min())
+			//	CAM[iC].CE_Compensar_Rapido();
+
+			//CAM[iC].Init_Textura_Groc();  //if(i==0)
+
+		CAM[iC].CE_Capturar();
+		CAM[iC].CE_Compensar();
+	
+		//cout << CAM[iC].Calcular_Luz_Media() << endl;
+	//	CAM[iC].CE_Error_Compensacion();
+		//CAM[iC].CE_Compensar_Rapido();	
+	}
+
+	compensacionInterseccion();
+	recibeDisplay();
+	cout << "Temps Captura: "<< Medix_temps(t0) << endl;
+
+	struct timespec t1 = Inicia_Temporisador();
+	//fussio_imagens();
+	fussioInversa_imagens();
+	cout << "Temps fussio: "<< Medix_temps(t1) << endl;
+
+	// Genera ruta de imagen a grabar para modo autonomo
+	int totalBytes = 2592*2592;
+	char direccionDeGrabacion[150]="";
+	generadorDeRuta( direccionDeGrabacion );
+
+	// Añadir al buffer para guardar en Memoria
+	buffer->addImage( imagen, direccionDeGrabacion, totalBytes );
+	Sum_It_Imagens();
+
+
+	//Calcula 
+	//fussioInversa_imagensIndividual();
+
+}
+
+
+
+void sistema_visio::generadorDeRuta( char direccionDeGrabacion[] )
+{
+
+	char generandoDireccion[150]="./Raspberry/dia_";
+
+	string numCicles = int2string(CICLES);
+	strcat( generandoDireccion, numCicles.c_str() );
+	strcat( generandoDireccion, "/cond_A/placa_1");
+	
+	strcat( generandoDireccion, "/RASP01_");
+	string sequencia = NOM_000X (codicImage);
+	strcat( generandoDireccion, sequencia.c_str() );
+
+	strcat( generandoDireccion, ".bmp");
+
+	strcpy( direccionDeGrabacion, generandoDireccion);
+
+	if(!existe(direccionDeGrabacion))
+	{
+		crear_carpeta (direccionDeGrabacion);
+		cout << "Se ha generado carpeta" << endl;
+	}
+
+
+}
+
+
+
+void sistema_visio::inicialisarPinsGPIO(void)
+{
+	pinMode( bit_0, OUTPUT);
+	pinMode( bit_1, OUTPUT);
+	pinMode( bit_2, OUTPUT);
+	pinMode( bit_3, OUTPUT);
+	pinMode( bit_4, OUTPUT);
+	pinMode( bit_5, OUTPUT);
+	pinMode( bit_6, OUTPUT);
+	pinMode( bit_7, OUTPUT);
+	pinMode( bit_OK, OUTPUT);
+	pinMode( bit_sync, OUTPUT);
+
+	digitalWrite( bit_0, 0);
+	digitalWrite( bit_1, 0);
+	digitalWrite( bit_2, 0);
+	digitalWrite( bit_3, 0);
+	digitalWrite( bit_4, 0);
+	digitalWrite( bit_5, 0);
+	digitalWrite( bit_6, 0);
+	digitalWrite( bit_7, 0);
+	digitalWrite( bit_sync, 0);
+	digitalWrite( bit_OK, 0);
+}
+
+
+void sistema_visio::recibeDisplay(void)
+{
+	unsigned char* byte;
+	int length=1;
+	int channel=0;
+
+/*
+	inicialisarPinsGPIO();
+	pinMode( bit_0, INPUT);
+	pinMode( bit_1, INPUT);
+	pinMode( bit_2, INPUT);
+	pinMode( bit_3, INPUT);
+	pinMode( bit_4, INPUT);
+	pinMode( bit_5, INPUT);
+	pinMode( bit_6, INPUT);
+	pinMode( bit_7, INPUT);
+
+	pinMode( bit_OK  , OUTPUT);
+	pinMode( bit_sync, INPUT);
+	
+
+	int BYTES=1000000;
+	bool sync=false, syncAnt=false;
+	unsigned char byte=0;
+	for(int bytes=0; bytes<BYTES; bytes++)
+	{
+		//leyendo
+		do
+		{
+			sync = digitalRead(bit_sync);
+
+			byte=0;
+			bool b7=digitalRead( bit_7 );
+			bool b6=digitalRead( bit_6 );
+			bool b5=digitalRead( bit_5 );
+			bool b4=digitalRead( bit_4 );
+			bool b3=digitalRead( bit_3 );
+			bool b2=digitalRead( bit_2 );
+			bool b1=digitalRead( bit_1 );
+			bool b0=digitalRead( bit_0 );
+
+			//cout <<b7<<" "<<b6<<" "<<b5<<" "<<b4<<" "<<b3<<" "<<b2<<" "<<b1<<" "<<b0<< endl;
+			byte += (unsigned char)((byte & 128) + (int) b7<< 7 );
+			byte += (unsigned char)((byte &  64) + (int) b6<< 6 );
+			byte += (unsigned char)((byte &  32) + (int) b5<< 5 );
+			byte += (unsigned char)((byte &  16) + (int) b4<< 4 );
+			byte += (unsigned char)((byte &   8) + (int) b3<< 3 );
+			byte += (unsigned char)((byte &   4) + (int) b2<< 2 );
+			byte += (unsigned char)((byte &   2) + (int) b1<< 1 );
+			byte += (unsigned char)((byte &   1) + (int) b0<< 0 );
+
+		}while( syncAnt == sync );
+
+		//->leido
+		digitalWrite( bit_OK, 1);
+		syncAnt=sync;
+		cout << (int)byte << endl;
+
+		//char a;
+		//scanf("%c", &a);
+	}
+
+*/
+}
+
+
+
+/************************************************
+Inicialisar Captura
+************************************************/
+void sistema_visio::inicialisarCaptura (void)
+{
+	if( inici_remot && !iniciat )
+	{
+		iniciat=true;
+		inici_remot=false;
+
+		codicImage=0;
+		capturando=true;
+		
+		for (int iSV=0; iSV < num_camaras; iSV++)
+			CAM[iSV].Set_Reset_Comp(true);
+	}
+}
+
+
+/*********************************************************
+Sincronisacio
+**********************************************************/
+void sistema_visio::sincronisacio(void)
+{
+	if(capturando)
+	{
+		codicImage++;
+		cout << codicImage << endl;
+	}
+
+	if( capturando && codicImage>= numMuestras )
+	{
+		capturando=false;
+		codicImage=0;
+	}
+
+	if( (capturando && codicImage>= numMuestras) || abortar)
+		capturando  = false;
+}
+
+
+
+/************************************************
+
+************************************************/
+void sistema_visio::fussio_imagens(void)
+{
+	if(num_camaras==1)
+		imagen= CAM[0].Get_Vect_Im();
+
+	//if(num_camaras==2)
+
+	if(num_camaras==4)
+	{
+		//unsigned char* imageReconstruida;
+		for(int iSV=0; iSV < num_camaras; iSV++)
+		{
+			CAM[iSV].fusionarImagen(imagen);
+		}
+
+		//imagen = imageReconstruida;
+	}
+}
+
+
+
+void sistema_visio::fussioInversa_imagens(void)
+{
+	unsigned char* quadrat;
+
+	//cout << "Fusionando Inversa TOTAL... " << endl;
+	int iam = 4;
+	//cout << "Número fils: " << iam << endl;
+	//cout << "NUMTHRDS: " << NUMTHRDS << endl;
+	int in;
+	#pragma omp parallel num_threads(4)
+	{
+		iam = omp_get_thread_num();
+
+		#pragma omp for
+		{
+			for(int cnt=0; cnt<CNTFusionInversa; cnt=cnt+2 )
+			{
+				imagen[tabla_calibracionFusionInversa[cnt+1]] = CAM[(int)idCAMARA[cnt]].Get_Vect_Im()[tabla_calibracionFusionInversa[cnt]];
+			}
+		}	
+	}
+	cout << endl;
+
+
+	//char rutaIm[100]="./fusionadaTotal.bmp";
+	//Mat dig(Size(2592, 2592), CV_8UC1, imagen);
+	//imwrite( rutaIm, dig); 
+	
+}
+
+
+
+/*****************************************************************************
+Compensacion puntos Intersección
+******************************************************************************/
+void sistema_visio::compensacionInterseccion(void)
+{
+
+	for(int cnt=0; cnt<cntInterseccion; cnt=cnt+3 )
+	{
+		int posTEX  = tabla_Interseccion[cnt+0];
+		int posIM1  = tabla_Interseccion[cnt+1];
+		int posIM2  = tabla_Interseccion[cnt+2];
+
+		int roig = ImagenDisplayVector[posTEX];
+		int vert = ImagenDisplayVector[posTEX+1];
+		int blau = ImagenDisplayVector[posTEX+2];
+		//int alfa = ImagenDisplayVector[posTEX+3];
+				
+		//int error = (int)(floor(0.9*( 48-quadrat[posIM])));
+		int error = (int)floor(0.9*( 48-( (   CAM[0].Get_Vect_Im()[posIM1] + CAM[1].Get_Vect_Im()[posIM2])/2) ));
+
+		int col_global= roig + vert + blau + error;
+
+		ImagenDisplayVector[posTEX]   = col_global;
+		ImagenDisplayVector[posTEX+1] = col_global-255;
+		ImagenDisplayVector[posTEX+2] = col_global-510;
+		ImagenDisplayVector[posTEX+3] = 255;
+
+		if (col_global-510<0)   ImagenDisplayVector[posTEX+2] =0;
+		if (col_global-255<0)   ImagenDisplayVector[posTEX+1] =0;
+		if (col_global<0)       ImagenDisplayVector[posTEX]   =0;
+		if (col_global-510>255) ImagenDisplayVector[posTEX+2] =255;
+		if (col_global-255>255) ImagenDisplayVector[posTEX+1] =255;
+		if (col_global>255)     ImagenDisplayVector[posTEX]   =255;
+
+
+	}
+
+}
+
+
+/*********************************************************************
+Calcula los pixeles de interseccion y crea una tabla de asignacion
+**********************************************************************/
+void sistema_visio::calculoPixelesIntersectados (void)
+{
+	int cnt=0;
+	int tamTextura = (int)floor(WIDTH_PANT)*HEIGHT_PANT*4;
+
+	for(int idxTexel=0; idxTexel<tamTextura; idxTexel=idxTexel+4)
+	{
+		if((int)detectadaInterseccion[idxTexel]==1)
+		{
+			tabla_Interseccion[cnt+0] = idxTexel;
+			tabla_Interseccion[cnt+1] = CAM[0].getPixelImage(idxTexel);
+			tabla_Interseccion[cnt+2] = CAM[1].getPixelImage(idxTexel);
+
+			cnt=cnt+3;
+		}
+	}
+	cout << "Número de intersecciones: " << cnt << endl;
+	cntInterseccion=cnt;
+	saveTablaInterseccion();
+}
+
+
+/*********************************************************************
+Fusiona la imagen de una sola cámara en una Imagen Mayor 
+**********************************************************************/
+void sistema_visio::fussioInversa_imagensIndividual(void)
+{
+	unsigned char* quadrat;
+
+	memset(imagen, 255, 2592*2592);
+
+	cout << "Fusionando Inversas Individualmente... " << endl;
+	//for(long long int cnt=0; cnt<CNTFusionInversa; cnt=cnt+2 )
+	for(long long int cnt=0; cnt<tamTabla1; cnt=cnt+2 )
+	{
+		long int posIM  =   tabla_calibracionFusionInversa1[cnt];
+		long int posImFus = tabla_calibracionFusionInversa1[cnt+1];
+
+		//int idC = (int)idCAMARA[cnt];
+		//if(idC==0)
+		{
+		//quadrat=CAM[idC].Get_Vect_Im();
+		quadrat=CAM[0].Get_Vect_Im();
+		imagen[posImFus] = quadrat[posIM];
+		}
+
+	}
+
+	char rutaIm1[100]="./Im1.bmp";
+	Mat Im1(Size(2592, 1944), CV_8UC1, CAM[0].Get_Vect_Im());
+	imwrite( rutaIm1, Im1);
+
+	char rutaIm[100]="./fusionada1.bmp";
+	Mat dig1(Size(2592, 2592), CV_8UC1, imagen);
+	imwrite( rutaIm, dig1); 
+
+	memset(imagen, 255, 2592*2592);
+
+	//for(long long int cnt=0; cnt<CNTFusionInversa; cnt=cnt+2 )
+	for(long long int cnt=0; cnt<tamTabla2; cnt=cnt+2 )
+	{
+		long int posIM  =   tabla_calibracionFusionInversa2[cnt];
+		long int posImFus = tabla_calibracionFusionInversa2[cnt+1];
+
+		//int idC = (int)idCAMARA[cnt];
+		//if(idC==1)
+		{
+		//quadrat=CAM[idC].Get_Vect_Im();
+		quadrat=CAM[1].Get_Vect_Im();
+		imagen[posImFus] = quadrat[posIM];
+		}
+	}
+
+	char rutaIm3[100]="./Im2.bmp";
+	Mat Im2(Size(2592, 1944), CV_8UC1, CAM[1].Get_Vect_Im());
+	imwrite( rutaIm3, Im2);
+
+	char rutaIm2[100]="./fusionada2.bmp";
+	Mat dig2(Size(2592, 2592), CV_8UC1, imagen);
+	imwrite( rutaIm2, dig2); 
+	
+}
+
+
+
+/*
+void sistema_visio::fussioInversa_imagens(void)
+{
+	unsigned char* quadrat;
+
+	cout << "Fusionando Inversa... " << endl;
+	for(long long int cnt=0; cnt<2592*2592; cnt++ )
+	{
+		int bytes  =  tabla_calibracionFusionInversa[cnt];
+
+		quadrat=CAM[0].Get_Vect_Im();
+		memcpy(imagen, quadrat ,bytes);
+
+
+		tabla_calibracionFusionEficiente[]
+
+		int idC = (int)idCAMARA[cnt];
+
+
+		imagen[posImFus] = quadrat[posIM];
+
+	}
+	
+}*/
+
+
+/************************************************
+Calibración 
+************************************************/
+void sistema_visio::calibracioDeFussio(void)
+{
+	/*
+	for(int k=0; k<(int)floor(WIDTH_PANT)*HEIGHT_PANT*4; k=k+4)
+	{
+		ImagenDisplayVector[k]  =   0;
+		ImagenDisplayVector[k+1]=   0;
+		ImagenDisplayVector[k+2]=   0;
+		ImagenDisplayVector[k+3]= 255;
+	}
+	for(int iSV=0; iSV < num_camaras; iSV++)
+	{
+		CAM[iSV].texturaBlanca();			
+	}
+	display->dibuixar();
+	*/
+
+	// Captura las cuatro imágenes
+	for(int iSV=0; iSV < num_camaras; iSV++)
+		CAM[iSV].CE_Capturar();		
+
+
+	if(1) //num_camaras==4)
+	{
+
+		cout << "calibracioDeFussio" << endl;
+		//Conseguir Puntos de borde de la imagen en coordenadas de dsiplay (texels)
+		long int totalPuntos=0;
+		Mat nubePuntos(20, 3, DataType<int>::type);
+
+		Mat G;
+		int Cx=0, Cy=0, R=0;
+
+		//char a;
+		//scanf("%c", &a);
+			 
+//		for(int iSV=0; iSV < num_camaras; iSV++)
+//		{
+			//cout << "cannyUmbral" << endl;
+			//totalPuntos = CAM[iSV].cannyUmbral(nubePuntos,totalPuntos);
+//			totalPuntos = CAM[iSV].detectarCircunferencia(nubePuntos,totalPuntos);
+//		}
+		
+		//Consegir el radio y el centro de la imagen del patron
+//		cout << "calcularCentroYRadioCirculo" << endl;
+		//cout << endl;
+		//cout << nubePuntos << ", " << totalPuntos << endl;
+//		calcularCentroYRadioCirculo( nubePuntos, &Cx, &Cy, &R, totalPuntos );
+
+		//Cx=642; Cy=240; R=170;
+		//Cx=606; Cy=242.25; R=200;
+		//Cx=235; Cy=242.25; 
+		R=200;
+		//Calcular el escalado y la translación para la nueva imagen
+		//Calcular con ellas la matriz de transformación G
+		calcularTransformacion ( G, Cx, Cy, R );
+		//detectarInterseccionesEnFusionadaX4CAM();
+//		detectarInterseccionesEnFusionadaX2CAM();
+
+
+		//Calular la matriz resultado de G*Pi
+		//Calcular la tabla asociada a cada G*Pi			
+//		for(int iSV=0; iSV < num_camaras; iSV++)
+//		{
+//			CAM[iSV].calculo_Tabla_GXP();
+//		}
+
+		//calculo_Tabla_GXP_InversaX4CAM();
+		calculo_Tabla_GXP_InversaX2CAM();
+		//calculo_Tabla_GXP_InversaX2CAMIndividual();
+
+		saveTablaFusionInversa();
+
+	}
+
+}
+
+
+/*
+Detectar circunferencia
+*/
+long int camara::detectarCircunferencia(Mat& nubePuntos, long int totalPuntos)
+{
+	vector<Vec3f> circles;
+	Mat center = Mat(Size(1, 3), CV_64FC1, Scalar(0,0,1));
+
+	Mat src_gray = Mat (Size(WIDTH_FRAME,HEIGHT_FRAME), CV_8UC1, quadrat );
+	HoughCircles( src_gray, circles, CV_HOUGH_GRADIENT, 2, 1000, 60, 10 , 1700, 2000 );
+
+	for( size_t i=0; i<circles.size(); i++ )
+	{
+
+		center.at<double>(0,0) = (double)circles[i][0];
+		center.at<double>(1,0) = (double)circles[i][1];
+		center.at<double>(2,0) = 1;
+		
+		double radio = circles[i][2];
+
+		Mat centro = dHiInv*center;
+
+		double x = (centro.at<double>(0,0)/centro.at<double>(0,2));
+		double y = (centro.at<double>(0,1)/centro.at<double>(0,2));
+
+		//Claculo radio
+		center.at<double>(0,0) = (double)circles[i][0];
+		center.at<double>(1,0) = (double)circles[i][1] + radio;
+		center.at<double>(2,0) = 1;
+
+		centro = dHiInv*center;
+
+		double x1 = (centro.at<double>(0,0)/centro.at<double>(0,2));
+		double y1 = (centro.at<double>(0,1)/centro.at<double>(0,2));
+
+		double radioTex = sqrt( pow(x-x1,2) + pow(y-y1,2) );
+
+		nubePuntos.at<int>(totalPuntos,0)=x;
+		nubePuntos.at<int>(totalPuntos,1)=y;
+		nubePuntos.at<int>(totalPuntos,2)=radioTex;
+
+		cout << "X: " << x << ", Y: " << y << ", " << radioTex << endl;
+		totalPuntos++;
+
+	}
+
+	return totalPuntos;
+
+}
+
+/************************************************************************
+Colocar una imagen
+*************************************************************************/
+void camara::fusionarImagen (unsigned char* fusionada)
+{
+	cout << "Fusionando... " << idCam << endl;
+	for(int cnt=0; cnt<CNTFusion; cnt=cnt+2 )
+	{
+		long int posIM  =   tabla_calibracionFusion[cnt];
+		long int posImFus = tabla_calibracionFusion[cnt+1];
+
+		fusionada[posImFus] = quadrat[posIM];
+		//fusionada[posImFus] = 63*idCam;
+	}
+
+}
+
+
+/* ****************************************************************************
+ detectar intersecciones
+******************************************************************************/
+void sistema_visio::detectarInterseccionesX2 ( void )
+{
+	int l=1944;
+	cout << "detectarIntersecciones de dos cámaras" << endl;
+	/***************************
+		CAM 0 
+		limite_A, limite_B y limite_C
+	****************************/
+	// Intersección A
+	Point2f texel_12 = CAM[0].PinvX(0,0);
+	Point2f texel_21 = CAM[1].PinvX(0,1944);
+	Point2f limite_A = (texel_12+texel_21)/2;
+
+	display->posarPunt(texel_12);
+	display->posarPunt(texel_21);
+	display->posarPunt(limite_A);
+
+
+	// Intersección B
+	texel_12 = CAM[0].PinvX(2592,0);
+	texel_21 = CAM[1].PinvX(2592,1944); 
+	Point2f limite_B = (texel_12+texel_21)/2;
+
+	display->posarPunt(texel_12);
+	display->posarPunt(texel_21);
+	display->posarPunt(limite_B);
+
+	centroImagen = (limite_A+limite_B)/2;
+	cout << "Centro de la imagen: " << centroImagen << endl;
+
+	// Cálculo de la recta en Cámara 0
+	Mat recta1 = Mat(2, 2, CV_64FC1);
+	Point2f puntoLinea_A0  = CAM[0].Px(limite_A.x, limite_A.y);
+	Point2f puntoLinea_B0  = CAM[0].Px(limite_B.x, limite_B.y);
+	CAM[0].obtenerEcuacionDeLaRecta( puntoLinea_A0, puntoLinea_B0, recta1, 0 );	//En Fusionada
+	CAM[0].obtenerEcuacionDeLaRecta( limite_A     , limite_B     , recta1, 1 );	//En textura
+
+
+	// Cálculo de la recta en Cámara 1
+	Mat recta2 = Mat(2, 2, CV_64FC1);
+	Point2f puntoLinea_A1 = CAM[1].Px(limite_A.x, limite_A.y);
+	Point2f puntoLinea_B1 = CAM[1].Px(limite_B.x, limite_B.y);
+	CAM[1].obtenerEcuacionDeLaRecta( puntoLinea_A1, puntoLinea_B1, recta2, 0 );	//En Fusionada
+	CAM[1].obtenerEcuacionDeLaRecta( limite_A     , limite_B     , recta2, 1 ); 	//En textura
+
+//	display->crearLlinia( recta1.at<double>(1,0), recta1.at<double>(1,1) );
+
+}
+
+
+/* ****************************************************************************
+ detectar intersecciones
+******************************************************************************/
+void sistema_visio::detectarInterseccionesX4 ( void )
+{
+	int l=1944;
+	cout << "detectarIntersecciones" << endl;
+	/***************************
+		CAM 0 
+		limite_A, limite_B y limite_C
+	****************************/
+	// Intersección A
+	Point2f texel_12 = CAM[0].PinvX(1944,1944);
+	Point2f texel_21 = CAM[2].PinvX(0,1944); //(1944,0)
+
+	Point2f limite_A = (texel_12+texel_21)/2;
+	Point2f puntoLinea_A = CAM[0].Px(limite_A.x, limite_A.y);
+display->posarPunt(texel_12);
+display->posarPunt(texel_21);
+	display->posarPunt(limite_A);
+
+
+	// Intersección B
+	texel_12 = CAM[0].PinvX(0,0);
+	texel_21 = CAM[1].PinvX(0,1944); //(1944,0)
+
+	Point2f limite_B = (texel_12+texel_21)/2;
+	Point2f puntoLinea_B = CAM[0].Px(limite_B.x, limite_B.y);
+display->posarPunt(texel_12);
+display->posarPunt(texel_21);
+	display->posarPunt(limite_B);
+
+
+	// Intersección C  - Centroide de la imagen
+	Point2f texel_a = CAM[0].PinvX(1944,0); //(0,1944)
+	Point2f texel_b = CAM[1].PinvX(1944,1944);
+	Point2f texel_c = CAM[2].PinvX(0,0);
+	Point2f texel_d = CAM[3].PinvX(0,1944); //(1944,0)
+
+	Point2f limite_C = (texel_a+texel_b+texel_c+texel_d)/4;
+	Point2f puntoLinea_C = CAM[0].Px( limite_C.x, limite_C.y );
+	cout << "Centro de las cámaras = " << limite_C << endl;
+display->posarPunt(texel_a);
+display->posarPunt(texel_b);
+display->posarPunt(texel_c);
+display->posarPunt(texel_d);
+	display->posarPunt(limite_C);
+
+	// Linea AC y Línea BC
+	Mat recta1 = Mat(2, 2, CV_64FC1);
+	CAM[0].obtenerEcuacionDeLaRecta( puntoLinea_C, puntoLinea_A, recta1, 0 );
+	CAM[0].obtenerEcuacionDeLaRecta( puntoLinea_C, puntoLinea_B, recta1, 1 );
+	cout << endl;
+
+
+	/***************************
+		CAM 1
+		limite_C y limite_D
+	****************************/
+	// Intersección D
+	puntoLinea_C = CAM[1].Px( limite_C.x, limite_C.y );
+	texel_12 = CAM[1].PinvX(1944,0); //(0,1944)
+	texel_21 = CAM[3].PinvX(0,0);
+
+	Point2f limite_D = (texel_12+texel_21)/2;
+	Point2f puntoLinea_D = CAM[1].Px(limite_D.x, limite_D.y);
+display->posarPunt(texel_12);
+display->posarPunt(texel_21);
+	display->posarPunt(limite_D);
+
+	// Linea CD
+	Mat recta2 = Mat(2, 2, CV_64FC1);
+	CAM[1].obtenerEcuacionDeLaRecta( puntoLinea_D , puntoLinea_C, recta2, 0 );
+	// Linea CB
+	puntoLinea_B = CAM[1].Px(limite_B.x, limite_B.y);
+	CAM[1].obtenerEcuacionDeLaRecta( puntoLinea_B , puntoLinea_C, recta2, 1 );
+	cout << endl;
+
+
+	/***************************
+		CAM 2
+		limite_C y limite_E
+	****************************/
+	// Intersección E
+	puntoLinea_C = CAM[2].Px( limite_C.x, limite_C.y );
+
+	texel_12 = CAM[2].PinvX(1944,0); //(0,1944)
+	texel_21 = CAM[3].PinvX(1944,1944);
+
+	Point2f limite_E = (texel_12+texel_21)/2;
+	Point2f puntoLinea_E = CAM[2].Px(limite_E.x, limite_E.y);
+display->posarPunt(texel_12);
+display->posarPunt(texel_21);
+	display->posarPunt(limite_E);
+
+	// Linea CE
+	Mat recta3 = Mat(2, 2, CV_64FC1);
+	CAM[2].obtenerEcuacionDeLaRecta( puntoLinea_E , puntoLinea_C, recta3, 0 );
+	// Linea CA
+	puntoLinea_A = CAM[2].Px(limite_A.x, limite_A.y);
+	CAM[2].obtenerEcuacionDeLaRecta( puntoLinea_A , puntoLinea_C, recta3, 1 );
+
+
+	/***************************
+		CAM 3
+		limite_C y limite_E
+	****************************/
+	puntoLinea_C = CAM[3].Px( limite_C.x, limite_C.y );
+	puntoLinea_E = CAM[3].Px( limite_E.x, limite_E.y);
+	puntoLinea_D = CAM[3].Px(limite_D.x, limite_D.y);
+
+	Mat recta4 = Mat(2, 2, CV_64FC1);	
+	// Linea CE
+	CAM[3].obtenerEcuacionDeLaRecta( puntoLinea_E , puntoLinea_C, recta4, 0 );
+	// Linea CD
+	CAM[3].obtenerEcuacionDeLaRecta( puntoLinea_D , puntoLinea_C, recta4, 1 );
+
+}
+
+
+/* 
+detectar intersecciones
+
+*/
+void sistema_visio::detectarInterseccionesEnFusionadaX2CAM( void )
+{
+	cout << "detectarIntersecciones en fusionada 2 Cámaras" << endl;
+	/****************************************
+		CAM 0 
+		limite_A, limite_B y limite_C
+	*****************************************/
+	// Intersección A
+	Point2f texel_12 = CAM[0].GxPx(0,0);
+	Point2f texel_21 = CAM[1].GxPx(0,1944);
+	Point2f limite_A = (texel_12+texel_21)/2;
+
+
+	// Intersección B
+	texel_12 = CAM[0].GxPx(2592,0);
+	texel_21 = CAM[1].GxPx(2592,1944);
+	Point2f limite_B = (texel_12+texel_21)/2;
+
+	// Linea AB
+	Mat recta1 = Mat(1, 2, CV_64FC1);
+	CAM[0].obtenerEcuacionDeLaRectaFusionada( limite_A, limite_B, recta1, 0 );
+
+	// Linea AB
+	Mat recta2 = Mat(1, 2, CV_64FC1);
+	CAM[1].obtenerEcuacionDeLaRectaFusionada( limite_A, limite_B, recta2, 0 );
+
+}
+
+
+
+/* 
+detectar intersecciones
+
+*/
+void sistema_visio::detectarInterseccionesEnFusionadaX4CAM( void )
+{
+	cout << "detectarIntersecciones en fusionada" << endl;
+	/***************************
+		CAM 0 
+		limite_A, limite_B y limite_C
+	****************************/
+	// Intersección A
+	Point2f texel_12 = CAM[0].GxPx(1944,1944);
+	Point2f texel_21 = CAM[2].GxPx(0,1944);
+	Point2f limite_A = (texel_12+texel_21)/2;
+
+
+	// Intersección B
+	texel_12 = CAM[0].GxPx(0,0);
+	texel_21 = CAM[1].GxPx(0,1944);
+	Point2f limite_B = (texel_12+texel_21)/2;
+
+
+	// Intersección C  - Centroide de la imagen
+	Point2f texel_a = CAM[0].GxPx(1944,0);
+	Point2f texel_b = CAM[1].GxPx(1944,1944);
+	Point2f texel_c = CAM[2].GxPx(0,0);
+	Point2f texel_d = CAM[3].GxPx(0,1944);
+
+	Point2f limite_C = (texel_a+texel_b+texel_c+texel_d)/4;
+	cout << "Centro de las cámaras = " << limite_C << endl;
+
+
+	// Linea AC y Línea BC
+	Mat recta1 = Mat(2, 2, CV_64FC1);
+	CAM[0].obtenerEcuacionDeLaRectaFusionada( limite_C, limite_A, recta1, 0 );
+	CAM[0].obtenerEcuacionDeLaRectaFusionada( limite_C, limite_B, recta1, 1 );
+
+
+	/***************************
+		CAM 1
+		limite_C y limite_D
+	****************************/
+	// Intersección D
+	texel_12 = CAM[1].GxPx(1944,0);
+	texel_21 = CAM[3].GxPx(0,0);
+	Point2f limite_D = (texel_12+texel_21)/2;
+
+	// Linea CD
+	Mat recta2 = Mat(2, 2, CV_64FC1);
+	CAM[1].obtenerEcuacionDeLaRectaFusionada( limite_D, limite_C, recta2, 0 );
+	// Linea BC
+	CAM[1].obtenerEcuacionDeLaRectaFusionada( limite_B, limite_C, recta2, 1 );  //-----
+
+
+
+	/***************************
+		CAM 2
+		limite_C y limite_E
+	****************************/
+	// Intersección E
+	texel_12 = CAM[2].GxPx(1944,0);
+	texel_21 = CAM[3].GxPx(1944,1944);
+	Point2f limite_E = (texel_12+texel_21)/2;
+
+	// Linea CE
+	Mat recta3 = Mat(2, 2, CV_64FC1);
+	CAM[2].obtenerEcuacionDeLaRectaFusionada( limite_E, limite_C, recta3, 0 );
+	CAM[2].obtenerEcuacionDeLaRectaFusionada( limite_A, limite_C, recta3, 1 );
+
+
+	/***************************
+		CAM 3
+		limite_C y limite_E
+	****************************/
+
+	// Linea CE
+	Mat recta4 = Mat(2, 2, CV_64FC1);
+	CAM[3].obtenerEcuacionDeLaRectaFusionada( limite_E, limite_C, recta4, 0 );
+	CAM[3].obtenerEcuacionDeLaRectaFusionada( limite_D, limite_C, recta4, 1 );
+
+
+}
+
+
+/* 
+	Obtener la Ecuación de la Recta
+
+*/
+void camara::obtenerEcuacionDeLaRecta(Point2f puntoA , Point2f puntoB, Mat& recta, int idRecta )
+{
+	double m;
+
+	if(puntoA.x-puntoB.x!=0)
+		m =  (puntoA.y-puntoB.y)/(puntoA.x-puntoB.x);
+	else m=99999;
+
+	double b =  puntoA.y - m*puntoA.x;
+
+	recta.at<double>(idRecta,0)=m;
+	recta.at<double>(idRecta,1)=b;
+
+	rectas = recta;
+
+}
+
+
+
+/* 
+	Obtener la Ecuación de la Recta
+
+*/
+void camara::obtenerEcuacionDeLaRectaFusionada(Point2f puntoA , Point2f puntoB, Mat& recta, int idRecta )
+{
+	double m;
+
+	if(puntoA.x-puntoB.x!=0)
+		m =  (puntoA.y-puntoB.y)/(puntoA.x-puntoB.x);
+	else m=99999;
+
+	double b =  puntoA.y - m*puntoA.x;
+
+	recta.at<double>(idRecta,0)=m;
+	recta.at<double>(idRecta,1)=b;
+
+	rectasFusionada = recta;
+
+}
+
+
+
+/* 
+ * Matriu de transforacio P
+*/
+Point2f camara::Px(double tx, double ty)
+{
+	Point2f transformado;
+
+	Mat punt = Mat(3, 1, CV_64FC1);
+
+	punt.at<double>(0,0)= tx; //cnt_j; // Y
+	punt.at<double>(1,0)= ty; //cnt_i; // X
+	punt.at<double>(2,0)= 1.0;
+
+	//Mat punt_T = dHi*punt;
+	Mat punt_T = dHiPlanoSuperior*punt;
+
+	int x = (int)(punt_T.at<double>(0,0)/punt_T.at<double>(0,2));
+	int y = (int)(punt_T.at<double>(0,1)/punt_T.at<double>(0,2));
+
+	transformado.x=x;
+	transformado.y=y;
+
+	
+	return transformado;
+}
+
+
+
+/* 
+ * Matriu de transforacio inversa P
+*/
+Point2f camara::PinvX( double imx, double imy)
+{
+
+	Point2f transformado;
+
+	Mat punt = Mat(3, 1, CV_64FC1);
+
+	punt.at<double>(0,0)= imx; //cnt_j; // Y
+	punt.at<double>(1,0)= imy; //cnt_i; // X
+	punt.at<double>(2,0)= 1.0;
+
+	//Mat punt_T = dHiInv*punt;
+	Mat punt_T = dHiPlanoSuperior.inv()*punt;  // <<<<<<<<--------------------
+
+	int tx = (int)(punt_T.at<double>(0,0)/punt_T.at<double>(0,2));
+	int ty = (int)(punt_T.at<double>(0,1)/punt_T.at<double>(0,2));
+ 
+
+	transformado.x=tx;
+	transformado.y=ty;
+
+	
+	return transformado;
+	
+}
+
+
+
+/**************************************************************************
+Proves 
+***************************************************************************/
+void camara::prova()
+{
+	CE_Capturar();
+
+	unsigned char* imagenTest   = (unsigned char*) malloc (sizeof(char) * WIDTH_FRAME * HEIGHT_FRAME);
+	memset ( imagenTest, 0, sizeof(char) * WIDTH_FRAME * HEIGHT_FRAME );
+
+	int const numRectas = rectas.rows;
+	double limiteEnY1=0,limiteEnY2=0;
+	cout << "rectas = " << rectas << endl;
+	//cout << "numRectas=" << numRectas << endl;
+
+	for(int x=0; x<WIDTH_FRAME; x++)
+	{
+
+		if(idCam==1) //idCam==0)//if(numRectas==1) 
+		{
+			limiteEnY1 = rectas.at<double>(0,0)*x + rectas.at<double>(0,1);
+			for(int j=0; j<HEIGHT_FRAME; j++)
+			{
+				if(j<limiteEnY1 )
+				 	int pd=1;//quadrat[x*1944 + j]=255;
+				else quadrat[j*WIDTH_FRAME + x]=127;
+			}
+		}
+		if(idCam==2)//if(numRectas==1) 
+		{
+			limiteEnY1 = rectas.at<double>(0,0)*x + rectas.at<double>(0,1);
+			for(int j=0; j<HEIGHT_FRAME; j++)
+			{
+				if( j>limiteEnY1 )
+					int pd=1;//quadrat[x*1944 + j]=255;
+				else quadrat[j*WIDTH_FRAME + x]=127;
+			}
+		}
+/*		if(numRectas==2)
+		{
+			limiteEnY1 = rectas.at<double>(0,0)*x + rectas.at<double>(0,1);
+			limiteEnY2 = rectas.at<double>(1,0)*x + rectas.at<double>(1,1);
+			for(int j=0; j<1944; j++)
+			{
+				if(idCam==1||idCam==3)
+				{
+					if(j>limiteEnY1 && j>limiteEnY2 )
+						int pd=1; //quadrat[x*1944 + j]=255;
+					else quadrat[j*1944 + x]=127;
+				}
+				if(idCam==2)
+				{
+					if(j>limiteEnY1 && j<limiteEnY2 )
+						int pd=1; //quadrat[x*1944 + j]=255;
+					else quadrat[j*1944 + x]=127;
+				}
+				if(idCam==4)
+				{
+					if(j<limiteEnY1 && j<limiteEnY2 )
+						int pd=1; //quadrat[x*1944 + j]=255;
+					else quadrat[j*1944 + x]=127;
+				}
+			}
+		}
+*/
+
+	}
+
+	guardarTest("./Test", quadrat);
+
+}
+
+
+/**************************************************************************
+Guarda una image 
+***************************************************************************/
+void camara::guardarTest(const char* nombre, unsigned char* im)
+{
+
+	char rutaIm[100];
+	strcpy(rutaIm, nombre);
+	string identificador = int2string(idCam);
+	strcat( rutaIm, identificador.c_str() );
+	strcat(rutaIm, ".bmp");
+	Mat dig(Size(WIDTH_FRAME, HEIGHT_FRAME), CV_8UC1, im);
+	imwrite( rutaIm, dig);
+
+}
+
+
+/**************************************************************************
+Guarda una image 
+***************************************************************************/
+void camara::guardarTest(const char* nombre)
+{
+
+	char rutaIm[100];
+	strcpy(rutaIm, nombre);
+	string identificador = int2string(idCam);
+	strcat( rutaIm, identificador.c_str() );
+	strcat( rutaIm, ".bmp");
+	Mat dig(Size(WIDTH_FRAME, HEIGHT_FRAME), CV_8UC1, quadrat);
+	imwrite( rutaIm, dig);
+
+}
+
+
+/*************************************************************************
+Convierte el Indice de Texel a Indice de imagen
+**************************************************************************/
+int camara::getPixelImage (int idxTexel)
+{
+	int idxImage=0;
+
+	int Ancho_Pant = (int)floor(ImagenDisplayTextura->GetWidth());
+
+	int texelY = (int)floor( (double)idxTexel/(4.0*floor(Ancho_Pant)));
+	int texelX = (int)floor(((double)idxTexel/4.0 - floor(Ancho_Pant)*(double)texelY));
+
+	Mat punt = Mat(3, 1, CV_64FC1);
+	punt.at<double>(0,0) = (double)texelX;
+	punt.at<double>(1,0) = (double)texelY;
+	punt.at<double>(2,0) = 1.0;
+
+	Mat punt_T = dHi*punt;
+
+	int y = (int)(punt_T.at<double>(0,0)/punt_T.at<double>(0,2));
+	int x = (int)(punt_T.at<double>(0,1)/punt_T.at<double>(0,2));
+
+	idxImage = x*(int)floor(WIDTH_FRAME) + y;
+
+	return idxImage;
+}
+
+
+/**************************************************************************
+Multiplica GxP 
+***************************************************************************/
+Point2f camara::GxPx(double Imx, double Imy )
+{
+	Point2f transformado;
+
+	Mat punt = Mat(3, 1, CV_64FC1);
+
+	punt.at<double>(0,0)= Imx;
+	punt.at<double>(1,0)= Imy;
+	punt.at<double>(2,0)= 1.0;
+
+	Mat punt_T = MatGxP*punt;
+
+	int Fx = (int)(punt_T.at<double>(0,0)/punt_T.at<double>(0,2));
+	int Fy = (int)(punt_T.at<double>(0,1)/punt_T.at<double>(0,2));
+
+	transformado.x=Fx;
+	transformado.y=Fy;
+
+	
+	return transformado;
+
+}
+
+
+
+/**************************************************************************
+Multiplica Inv_GxPx 
+***************************************************************************/
+Point2f camara::Inv_GxPx(double FusX, double FusY )
+{
+	Point2f transformado;
+
+	Mat punt = Mat(3, 1, CV_64FC1);
+
+	punt.at<double>(0,0)= FusX;
+	punt.at<double>(1,0)= FusY;
+	punt.at<double>(2,0)= 1.0;
+
+	Mat punt_T = MatGxPInv*punt;   //  <<<<<<<<< ----------------------
+
+
+	int ImX = (int)(punt_T.at<double>(0,0)/punt_T.at<double>(0,2));
+	int ImY = (int)(punt_T.at<double>(0,1)/punt_T.at<double>(0,2));
+
+	transformado.x=ImX;
+	transformado.y=ImY;
+
+	
+	return transformado;
+
+}
+
+
+/**************************************************************************
+Introduce GxP 
+***************************************************************************/
+void camara::setMatGxP(Mat& G)
+{
+	//MatGxP = G*dHiInv;
+	MatGxP = G*dHiPlanoSuperior.inv();  //   <<<<<<<<<<<<<<<<<------------------------------
+	MatGxPInv = MatGxP.inv(); 
+	cout << "Calculando GxP..." << idCam << endl;
+}
+
+
+/************************************************************************
+Calculo tabla de Fusion
+*************************************************************************/
+int camara::calculo_Tabla_GXP ( void )
+{
+
+	int AnchoOrigen = WIDTH_FRAME;
+	int AltoOrigen  = HEIGHT_FRAME;
+
+	int AnchoFusion = WIDTH_FRAME*2;
+	int AltoFusion  = HEIGHT_FRAME*2;
+
+	//Mat punt = Mat(Size(1, 3), CV_64FC1, Scalar(0,0,1));
+	cout << "Creando tabla... " << idCam << endl;
+	
+
+	//int const numRectas = rectas.rows;
+	int const numRectas = rectasFusionada.rows;
+
+
+	double limiteEnY1=0,limiteEnY2=0;
+	int cnt = 0;
+	long int posIM, posFus;
+	Point2f puntFusionada;
+
+	double m1, m2, b1, b2;
+	if(numRectas>0)
+	{
+		m1 = rectas.at<double>(0,0);
+		b1 = rectas.at<double>(0,1);
+
+		if(numRectas==2)
+		{
+			m2 = rectas.at<double>(1,0);
+			b2 = rectas.at<double>(1,1);
+		}
+	}
+
+/*	if(numRectas>0)
+	{
+		m1 = rectasFusionada.at<double>(0,0);
+		b1 = rectasFusionada.at<double>(0,1);
+
+		if(numRectas==2)
+		{
+			m2 = rectasFusionada.at<double>(1,0);
+			b2 = rectasFusionada.at<double>(1,1);
+		}
+	}
+*/
+
+	for(int ImX=0; ImX<AnchoOrigen; ImX++ )
+	{
+		for(int ImY=0; ImY<AltoOrigen; ImY++ )
+		{
+			puntFusionada = GxPx((double)ImX,(double)ImY);
+
+			if(puntFusionada.x>=0 && puntFusionada.x<1944*2 && puntFusionada.y>=0 && puntFusionada.y<1944*2)
+			{
+
+				if(0) //numRectas==0)
+				{
+					posFus = (puntFusionada.y*(1944*2) + puntFusionada.x);
+					if(evaluado[posFus]==0 )
+					{
+						posIM  = ImY*1944 + ImX;
+
+						tabla_calibracionFusion[cnt]   = posIM;
+						tabla_calibracionFusion[cnt+1] = posFus;
+						evaluado[posFus]=255;
+						cnt=cnt+2;
+					}
+				} 
+				
+				if(0) //numRectas==1)
+				{
+					//limiteEnY1 = m1*ImX + b1;
+					limiteEnY1 = m1*puntFusionada.x + b1;
+
+					posFus = (puntFusionada.y*(1944*2) + puntFusionada.x);
+					if(!evaluado[posFus] && puntFusionada.y>limiteEnY1) //ImY>limiteEnY1 )
+					{
+						posIM  = ImY*1944 + ImX; 
+
+						tabla_calibracionFusion[cnt]   = posIM;
+						tabla_calibracionFusion[cnt+1] = posFus;
+						evaluado[posFus]=true;
+						cnt=cnt+2;
+					}
+				}		
+			
+				if(0) //numRectas==2)
+				{
+					limiteEnY1 = m1 * ImX + b1;
+					limiteEnY2 = m2 * ImX + b2;
+
+					//limiteEnY1 = m1 * puntFusionada.x + b1;
+					//limiteEnY2 = m2 * puntFusionada.x + b2;
+
+					posFus = (puntFusionada.y*(1944*2) + puntFusionada.x);
+
+					//if(!evaluado[posFus] && puntFusionada.y>limiteEnY1 && puntFusionada.y>limiteEnY2 ) //ImY>limiteEnY1 && ImY>limiteEnY2 )
+					if( ImY>limiteEnY1 && ImY>limiteEnY2 )
+					{
+						posIM  = ImY*1944 + ImX; 
+
+						tabla_calibracionFusion[cnt]   =  posIM;
+						tabla_calibracionFusion[cnt+1] =  puntFusionada.y*(1944*2)  + puntFusionada.x;
+						evaluado[posFus]=true;
+						cnt=cnt+2;
+					}
+				}
+
+				if(1)
+				{
+					limiteEnY1 = m1 * ImX + b1;
+					limiteEnY2 = m2 * ImX + b2;
+
+
+					posFus = (puntFusionada.y*(1944*2) + puntFusionada.x);
+
+
+					if(idCam==1||idCam==3)
+					{
+						if(ImY>limiteEnY1 && ImY>limiteEnY2 )
+						{
+							posIM  = ImY*1944 + ImX; 
+
+							tabla_calibracionFusion[cnt]   =  posIM;
+							tabla_calibracionFusion[cnt+1] =  puntFusionada.y*(1944*2)  + puntFusionada.x;
+							evaluado[posFus]=true;
+							cnt=cnt+2;
+						}
+							
+					}
+					if(idCam==2)
+					{
+						if(ImY>limiteEnY1 && ImY<limiteEnY2 )
+						{
+							posIM  = ImY*1944 + ImX; 
+
+							tabla_calibracionFusion[cnt]   =  posIM;
+							tabla_calibracionFusion[cnt+1] =  puntFusionada.y*(1944*2)  + puntFusionada.x;
+							evaluado[posFus]=true;
+							cnt=cnt+2;
+						}
+							
+					}
+					if(idCam==4)
+					{
+						if(ImY<limiteEnY1 && ImY<limiteEnY2 )
+						{
+							posIM  = ImY*1944 + ImX; 
+
+							tabla_calibracionFusion[cnt]   =  posIM;
+							tabla_calibracionFusion[cnt+1] =  puntFusionada.y*(1944*2)  + puntFusionada.x;
+							evaluado[posFus]=true;
+							cnt=cnt+2;
+						}
+							
+					}
+
+
+				}
+
+			}
+		
+		}
+	}
+
+	CNTFusion = cnt;
+	cout << cnt << endl;
+}
+
+
+/************************************************************************
+Calculo tabla de Fusion 2 CAM
+*************************************************************************//*
+int sistema_visio::calculo_Tabla_GXP_InversaX2CAM ( void )
+{
+
+	int AnchoOrigen = WIDTH_FRAME;
+	int AltoOrigen  = HEIGHT_FRAME;
+
+	int AnchoFusion = 2592;
+	int AltoFusion  = 2592;
+
+	cout << "Creando tabla Inversa para 2 cámaras... " << endl;
+	
+
+	double limiteEnY1=0;
+	long int cnt = 0;
+	long int posIM, posFus;
+	Point2f puntImage;
+
+	double m1, b1;
+
+
+	for(int id=0; id<num_camaras; id++)
+	{
+
+		m1=CAM[id].getM(0);
+		b1=CAM[id].getB(0);
+
+
+		for(int FusionadaX=0; FusionadaX<AnchoFusion; FusionadaX++ )
+		{
+			for(int FusionadaY=0; FusionadaY<AltoFusion; FusionadaY++ )
+			{
+				puntImage = CAM[id].Inv_GxPx((double)FusionadaX,(double)FusionadaY);
+
+				if(puntImage.x>=0 && puntImage.x<AnchoOrigen && puntImage.y>=0 && puntImage.y<AltoOrigen)
+				{
+
+					limiteEnY1 = m1 * puntImage.x + b1;
+					posFus = FusionadaY*(AnchoFusion)  + FusionadaX;
+
+					if( id==0 )
+					{
+						if( puntImage.y<limiteEnY1 ) //!evaluado[posFus] && puntImage.y<limiteEnY1 )
+						{
+							posIM  = puntImage.y*AnchoOrigen + puntImage.x; 
+
+							tabla_calibracionFusionInversa[cnt]   =  posIM;
+							tabla_calibracionFusionInversa[cnt+1] =  posFus;
+							idCAMARA[cnt] = id;
+							//evaluado[posFus]=1;
+							cnt=cnt+2;
+
+						}
+							
+					}
+					if(id==1)
+					{
+						if( puntImage.y>limiteEnY1 ) //!evaluado[posFus] && puntImage.y>limiteEnY1 )
+						{
+							posIM  = puntImage.y*AnchoOrigen + puntImage.x; 
+
+							tabla_calibracionFusionInversa[cnt]   =  posIM;
+							tabla_calibracionFusionInversa[cnt+1] =  posFus;
+							idCAMARA[cnt] = id;
+							//evaluado[posFus]=1;
+							cnt=cnt+2;
+
+						}
+							
+					}
+								
+
+				}
+		
+			}
+		}
+		cout << "pixelesConvert: " << cnt << endl;
+	}
+
+	CNTFusionInversa = cnt;
+	cout << cnt << endl;
+}*/
+
+
+/************************************************************************
+Calculo tabla de Fusion 2 CAM
+*************************************************************************/
+int sistema_visio::calculo_Tabla_GXP_InversaX2CAM (void)
+{
+
+	int AnchoOrigen = WIDTH_FRAME;
+	int AltoOrigen  = HEIGHT_FRAME;
+
+	int AnchoFusion = 2592;
+	int AltoFusion  = 2592;
+
+	cout << "Creando tabla Inversa TOTAL para 2 cámaras... " << endl;
+	
+
+	double limiteEnY1=0;
+	long int cnt = 0;
+	long int posIM, posFus;
+	Point2f puntImage;
+
+	double m1, b1;
+
+	for(int id=0; id<num_camaras; id++)
+	{
+
+		m1=CAM[id].getM(0);
+		b1=CAM[id].getB(0);
+
+
+		for(int FusionadaX=0; FusionadaX<AnchoFusion; FusionadaX++ )
+		{
+			for(int FusionadaY=0; FusionadaY<AltoFusion; FusionadaY++ )
+			{
+				puntImage = CAM[id].Inv_GxPx((double)FusionadaX,(double)FusionadaY);
+
+				if(puntImage.x>=0 && puntImage.x<AnchoOrigen && puntImage.y>=0 && puntImage.y<AltoOrigen)
+				{
+
+					posFus = FusionadaY*(AnchoFusion)  + FusionadaX;
+
+					if( id==0 )
+					{
+						limiteEnY1 = m1 * puntImage.x + b1;
+
+						if( puntImage.y>limiteEnY1 && !evaluado[posFus]) 		//!evaluado[posFus] && puntImage.y<limiteEnY1 )
+						{
+							posIM  = puntImage.y*AnchoOrigen + puntImage.x; 
+
+							tabla_calibracionFusionInversa[cnt]   =  posIM;
+							tabla_calibracionFusionInversa[cnt+1] =  posFus;
+							idCAMARA[cnt] = id;
+							evaluado[posFus]=1;
+							cnt=cnt+2;
+
+						}
+							
+					}
+					if(id==1)
+					{
+						if( !evaluado[posFus]) 	 //puntImage.y<limiteEnY1 && 	//!evaluado[posFus] && puntImage.y>limiteEnY1 )
+						{
+							posIM  = puntImage.y*AnchoOrigen + puntImage.x; 
+
+							tabla_calibracionFusionInversa[cnt]   =  posIM;
+							tabla_calibracionFusionInversa[cnt+1] =  posFus;
+							idCAMARA[cnt] = id;
+							evaluado[posFus]=1;
+							cnt=cnt+2;
+
+						}
+							
+					}
+								
+
+				}
+		
+			}
+		}
+		cout << "pixelesConvert: " << cnt << endl;
+
+	}
+
+	CNTFusionInversa = cnt;
+
+}
+
+
+/************************************************************************
+Calculo tabla de Fusion 2 CAM
+*************************************************************************/
+int sistema_visio::calculo_Tabla_GXP_InversaX2CAMIndividual ( void )
+{
+
+	int AnchoOrigen = WIDTH_FRAME;
+	int AltoOrigen  = HEIGHT_FRAME;
+
+	int AnchoFusion = 2592;
+	int AltoFusion  = 2592;
+
+	cout << "Creando tabla Inversa para 2 cámaras... " << endl;
+	
+
+	double limiteEnY1=0;
+	long int cnt = 0;
+	long int posIM, posFus;
+	Point2f puntImage;
+
+	double m1, b1;
+	tamTabla1=0;
+	tamTabla2=0;
+
+	for(int id=0; id<num_camaras; id++)
+	{
+
+		m1=CAM[id].getM(0);
+		b1=CAM[id].getB(0);
+
+
+		for(int FusionadaX=0; FusionadaX<AnchoFusion; FusionadaX++ )
+		{
+			for(int FusionadaY=0; FusionadaY<AltoFusion; FusionadaY++ )
+			{
+				puntImage = CAM[id].Inv_GxPx((double)FusionadaX,(double)FusionadaY);
+
+				if(puntImage.x>=0 && puntImage.x<AnchoOrigen && puntImage.y>=0 && puntImage.y<AltoOrigen)
+				{
+
+					limiteEnY1 = m1 * puntImage.x + b1;
+					posFus = FusionadaY*(AnchoFusion)  + FusionadaX;
+
+					if( id==0 )
+					{
+						//if( puntImage.y<limiteEnY1 ) 		//!evaluado[posFus] && puntImage.y<limiteEnY1 )
+						{
+							posIM  = puntImage.y*AnchoOrigen + puntImage.x; 
+
+							//tabla_calibracionFusionInversa[cnt]   =  posIM;
+							//tabla_calibracionFusionInversa[cnt+1] =  posFus;
+							//idCAMARA[cnt] = id;
+							//evaluado[posFus]=1;
+							//cnt=cnt+2;
+							tabla_calibracionFusionInversa1[tamTabla1]   =  posIM;
+							tabla_calibracionFusionInversa1[tamTabla1+1] =  posFus;
+							tamTabla1=tamTabla1+2;
+						}
+							
+					}
+					if(id==1)
+					{
+						//if( puntImage.y>limiteEnY1 ) 		//!evaluado[posFus] && puntImage.y>limiteEnY1 )
+						{
+							posIM  = puntImage.y*AnchoOrigen + puntImage.x; 
+
+							//tabla_calibracionFusionInversa[cnt]   =  posIM;
+							//tabla_calibracionFusionInversa[cnt+1] =  posFus;
+							//idCAMARA[cnt] = id;
+							//evaluado[posFus]=1;
+							//cnt=cnt+2;
+
+							tabla_calibracionFusionInversa2[tamTabla2]   =  posIM;
+							tabla_calibracionFusionInversa2[tamTabla2+1] =  posFus;
+							tamTabla2=tamTabla2+2;
+						}
+							
+					}
+								
+
+				}
+		
+			}
+		}
+		//cout << "pixelesConvert: " << cnt << endl;
+
+	}
+
+	cout << "pixelesConvert: " << tamTabla1 << endl;
+	cout << "pixelesConvert: " << tamTabla2 << endl;
+
+	//CNTFusionInversa = cnt;
+
+}
+
+/************************************************************************
+Calculo tabla de Fusion
+*************************************************************************/
+int sistema_visio::calculo_Tabla_GXP_InversaX4CAM ( void )
+{
+
+	int AnchoOrigen = WIDTH_FRAME;
+	int AltoOrigen  = HEIGHT_FRAME;
+
+	int AnchoFusion = WIDTH_FRAME*2;
+	int AltoFusion  = HEIGHT_FRAME*2;
+
+	cout << "Creando tabla Inversa... " << endl;
+	
+
+	double limiteEnY1=0,limiteEnY2=0;
+	long long int cnt = 0;
+	long int posIM, posFus;
+	Point2f puntImage;
+
+	double m1, m2, b1, b2;
+
+
+	for(int id=0; id<num_camaras; id++)
+	{
+
+		m1=CAM[id].getM(0);
+		b1=CAM[id].getB(0);
+
+		m2=CAM[id].getM(1);
+		b2=CAM[id].getB(1);
+
+		for(int FusionadaX=0; FusionadaX<AnchoFusion; FusionadaX++ )
+		{
+			for(int FusionadaY=0; FusionadaY<AltoFusion; FusionadaY++ )
+			{
+				puntImage = CAM[id].Inv_GxPx((double)FusionadaX,(double)FusionadaY);
+
+				if(puntImage.x>=0 && puntImage.x<1944 && puntImage.y>=0 && puntImage.y<1944)
+				{
+
+					limiteEnY1 = m1 * puntImage.x + b1;
+					limiteEnY2 = m2 * puntImage.x + b2;
+
+					posFus = FusionadaY*(1944*2)  + FusionadaX;
+
+					if( id==0 || id==2 )
+					{
+						if(!evaluado[posFus] && puntImage.y>limiteEnY1 && puntImage.y>limiteEnY2 )
+						{
+							posIM  = puntImage.y*1944 + puntImage.x; 
+
+							tabla_calibracionFusionInversa[cnt]   =  posIM;
+							tabla_calibracionFusionInversa[cnt+1] =  posFus;
+							idCAMARA[cnt] = id;
+							evaluado[posFus]=1;
+							cnt=cnt+2;
+
+						}
+							
+					}
+					if(id==1)
+					{
+						if(!evaluado[posFus] && puntImage.y>limiteEnY1 && puntImage.y<limiteEnY2 )
+						{
+							posIM  = puntImage.y*1944 + puntImage.x; 
+
+							tabla_calibracionFusionInversa[cnt]   =  posIM;
+							tabla_calibracionFusionInversa[cnt+1] =  posFus;
+							idCAMARA[cnt] = id;
+							evaluado[posFus]=1;
+							cnt=cnt+2;
+
+						}
+							
+					}
+					if(id==3)
+					{
+						if(!evaluado[posFus] && puntImage.y<limiteEnY1 && puntImage.y<limiteEnY2 )
+						{
+							posIM  = puntImage.y*1944 + puntImage.x; 
+
+							tabla_calibracionFusionInversa[cnt]   =  posIM;
+							tabla_calibracionFusionInversa[cnt+1] =  posFus;
+							idCAMARA[cnt] = id;
+							evaluado[posFus]=1;
+							cnt=cnt+2;
+
+						}
+							
+					}				
+
+				}
+		
+			}
+		}
+		cout << "pixelesConvert: " << cnt << endl;
+	}
+
+	CNTFusionInversa = cnt;
+	cout << cnt << endl;
+}
+
+
+/**********************************************************************************************************************
+Calcular transformación del display a la imagen compuesta
+**********************************************************************************************************************/
+void sistema_visio::calcularTransformacion ( Mat& G, int Cx, int Cy, int radioImTextura )
+{
+	cout << "calcularTransformacion" << endl;
+	double anchoImagenCompuesta = 2592; //WIDTH_FRAME
+	double altoImagenCompuesta  = 2592; //HEIGHT_FRAME
+
+	double radioImCompuesta = altoImagenCompuesta/2.0;
+
+	double S = (double)radioImTextura/radioImCompuesta;
+
+	double dx =   2592/2*S + (double)centroImagen.x;
+	double dy =   2592/2*S - (double)centroImagen.y;
+
+	G = Mat::zeros( 3, 3, CV_64FC1);
+
+	// Matriz G
+	G.at<double>(0,0)=-1;				G.at<double>(0,2)= dx;
+				G.at<double>(1,1)= 1;	G.at<double>(1,2)= dy;
+							G.at<double>(2,2)= S;
+	
+
+	for(int id=0; id<num_camaras; id++)
+		CAM[id].setMatGxP(G);
+	
+
+}
+
+
+/**********************************************************************************************************************
+Detectar circunferencia
+**********************************************************************************************************************/
+void sistema_visio::calcularCentroYRadioCirculo ( Mat& nubePuntos, int *Cx, int *Cy, int *R,  long int totalPuntos )
+{
+
+	double   mediaRadio=0;
+	double   mediaX=0, mediaY=0, mediar=0;
+	long int xSuma=0, ySuma=0, rSuma=0;
+
+
+	if(totalPuntos>0)
+	{
+		for( int cnt=0; cnt<totalPuntos; cnt++ )
+		{
+			xSuma += nubePuntos.at<int>(cnt,0); //(*nubePuntos)[cnt][0];
+			ySuma += nubePuntos.at<int>(cnt,1);  //(*nubePuntos)[cnt][1];
+			rSuma += nubePuntos.at<int>(cnt,2);
+		}
+
+		mediaX = (double)(xSuma/totalPuntos);
+		mediaY = (double)(ySuma/totalPuntos);
+		mediar = (double)(rSuma/totalPuntos);
+
+		/*
+		for( int cnt=0; cnt<totalPuntos; cnt++ )
+		{
+			double x = nubePuntos.at<int>(cnt,0); //(*nubePuntos)[cnt][0];
+			double y = nubePuntos.at<int>(cnt,1);  //(*nubePuntos)[cnt][1];
+
+			mediaRadio += sqrt ( pow( mediaX-x, 2 ) + pow( mediaY-y, 2 ) );
+		}*/
+
+		mediaRadio = mediar;
+		//mediaRadio = mediaRadio/totalPuntos;
+
+				/**********************************
+				Dibuixa
+				***********************************/
+				int anchoPant = (int)floor(WIDTH_PANT);
+				for( int cnti=(mediaX-5); cnti<(mediaX+5); cnti++ )
+					for( int cntj=(mediaY-5); cntj<(mediaY+5); cntj++ )
+					{
+						long int posTEX  = cntj*anchoPant + cnti;
+
+						ImagenDisplayVector[posTEX*4]  =   0;
+						ImagenDisplayVector[posTEX*4+1]=   0;
+						ImagenDisplayVector[posTEX*4+2]= 255;
+						ImagenDisplayVector[posTEX*4+3]= 255;
+					}
+				/*********************************************/
+
+		*Cx=mediaX;
+		*Cy=mediaY;
+		*R =(int)round(mediaRadio);
+		cout << "Cx: " << mediaX << ", Cy: " << mediaY << ", R: " << mediaRadio << endl;
+	}
+}
+
+
+
+/**********************************************************************
+Segmentar
+**********************************************************************/
+void camara::segmentar(int umbralColor)
+{
+
+	memset(segmentada, 255, sizeof(char) * WIDTH_FRAME * HEIGHT_FRAME );
+	for( int cnt=0; cnt<WIDTH_FRAME * HEIGHT_FRAME; cnt++ )
+		if(quadrat[cnt]>umbralColor)
+			segmentada[cnt]=0;
+	
+}
+
+
+/**********************************************************************
+Detectar bordes
+**********************************************************************/
+long int camara::cannyUmbral( Mat& nubePuntos, long int totalPuntos )
+{
+	bool show = false;
+
+	int Ancho_Pant = (int)floor(ImagenDisplayTextura->GetWidth());
+	int Alto_Pant  = ImagenDisplayTextura->GetHeight();
+
+	Mat src, dst, detected_edges;
+
+	int edgeThresh = 2;
+	int lowThreshold=0;
+	int const max_lowThreshold = 20; //100
+	int ratio = 3;
+	int kernel_size = 3;
+
+	//int anchoPant = (int)floor(WIDTH_PANT);
+
+	segmentar(10);
+
+	Mat src_gray = Mat (Size(WIDTH_FRAME,HEIGHT_FRAME), CV_8UC1, segmentada );
+	Mat punt = Mat(Size(1, 3), CV_64FC1, Scalar(0,0,1));
+
+	//if (!view.empty())
+
+	// Reduce noise with a kernel 3x3
+	blur( src_gray, detected_edges, Size(3,3) );
+
+	// Canny detector
+	Canny( detected_edges, detected_edges, lowThreshold, lowThreshold*ratio, kernel_size );
+
+
+	float xmax=0, ymax=0, xmin=1000, ymin=1000;
+	float mediaX=0, mediaY=0;
+
+	for (int j=0; j<1944 ; j++)
+		for (int i=0; i<1944 ; i++)
+			if((int)detected_edges.at<uchar>(i,j)==255)
+			{	
+
+				punt.at<double>(0,0)=  (double)j; //j; //-i
+				punt.at<double>(0,1)=  (double)i; //i; //j
+				punt.at<double>(0,2)=  1.0;
+
+				Mat punt_T = dHiInv*punt;
+
+				//int y = (int)(punt_T.at<double>(0,0)/punt_T.at<double>(0,2));
+				//int x = (int)(punt_T.at<double>(0,1)/punt_T.at<double>(0,2));
+				int x = (int)(punt_T.at<double>(0,0)/punt_T.at<double>(0,2));
+				int y = (int)(punt_T.at<double>(0,1)/punt_T.at<double>(0,2));
+
+				//cout << x << ", " << y << endl;
+
+				if(x>=0 && x<Ancho_Pant && y>=0 && y<Alto_Pant)
+				{
+					nubePuntos.at<int>(totalPuntos,0)=x;
+					nubePuntos.at<int>(totalPuntos,1)=y;
+
+					long int posTEX = (y*floor(Ancho_Pant) + x);
+
+					ImagenDisplayVector[posTEX*4]  = 255;
+					ImagenDisplayVector[posTEX*4+1]=   0;
+					ImagenDisplayVector[posTEX*4+2]=   0;
+					ImagenDisplayVector[posTEX*4+3]= 255;
+					
+					totalPuntos++;
+					
+				}
+			}
+
+
+	return totalPuntos;
+
+}
+
+
+
+/***************************************************************************************
+Constructuor de Clase: "camara". Inicio de clase. Crea, inicializa... variables
+****************************************************************************************/
+camara::camara()
+{
+	corregir_x=0; corregir_y=0; CNTA=0;
+    	Iteracions_Compensacio = 1;
+	minim_error_compensacio = 100.0;
+    	MET_Ant=0; mija_error_compensacio=0;
+    	It_Erro=0; min_found=false;
+    	alpha=0;
+	reset_comp=false;
+	calibrada=false; recalibrar=false;
+	escala=1;
+
+	mostrar_tex.CreateRGBA ( 431, 480 ); //WIDTH_PANT, HEIGHT_PANT );
+	mostrar_tex.GenerateFrameBuffer();
+
+	//pantalla_grey.CreateGreyScale ( 1944, 1944 ); //WIDTH_PANT, HEIGHT_PANT );
+	//pantalla_grey.GenerateFrameBuffer();
+
+	strcpy(ruta_homography		, "./configuracio/homografia");
+	strcpy(ruta_homographyPlanoPlaca, "./configuracio/h");
+	strcpy(ruta_patron		, "./configuracio/p");
+	strcpy(ruta_tablaCalibracion    , "./configuracio/tablaCalibracion");
+
+	tabla_calibracion		= (long int*) 	   malloc (sizeof(long int)  * 900*480*2);
+	//tabla_calibracionDirecta	= (long int*) 	   malloc (sizeof(long int)  * WIDTH_FRAME*HEIGHT_FRAME);
+	tabla_calibracionFusion		= (long int*) 	   malloc (sizeof(long int)  * WIDTH_FRAME*HEIGHT_FRAME*4);
+
+	quadrat				= (unsigned char*) malloc (sizeof(char)      * WIDTH_FRAME*HEIGHT_FRAME );
+	segmentada			= (unsigned char*) malloc (sizeof(char)      * WIDTH_FRAME*HEIGHT_FRAME );
+	//image_desti  			= (unsigned char*) malloc (sizeof(char)      * WIDTH_FRAME*HEIGHT_FRAME *4 );
+	vector_mostrar_ant 		= (unsigned char*) malloc (sizeof(char)      * 431*480*4);
+	vector_mostrar_minim_error 	= (unsigned char*) malloc (sizeof(char)      * 431*480*4);
+	//Init_Textura_Groc();
+
+	memset(tabla_calibracion,        0, sizeof(int)*861*480*2);
+	//memset(tabla_calibracionDirecta, 0, sizeof(int)*WIDTH_FRAME*HEIGHT_FRAME);
+	memset(tabla_calibracionFusion,  0, sizeof(int)*WIDTH_FRAME*HEIGHT_FRAME*4);
+
+	pthread_t reproduir_id;
+	pthread_create(&reproduir_id, NULL, Reproduir_Audio, NULL );
+
+	Init_It_Imagens();
+
+	Init_Erro_Minim();
+	Init_It_Error();
+	Init_Erro_Mija();
+
+}
+
+
+
+
+/************************************************
+Fixar el Display
+************************************************/
+void camara::setDisplay (Display* disp)
+{
+	display=disp;
+
+	ImagenDisplayVector  = display->pImagenDisplayVector();
+	ImagenDisplayTextura = display->pImagenDisplayTextura();
+
+}
+
+
+/************************************************
+Crear la ruta de la homografia
+************************************************/
+void camara::crear_ruta_homografia (void)
+{
+	string conf = int2string(config); //num_camaras
+	strcat( ruta_homography, conf.c_str() );
+
+	string sistVis = int2string(idSV);  //idSV
+	strcat( ruta_homography, sistVis.c_str() );
+
+	string sancer = int2string(numPort);
+	strcat( ruta_homography, sancer.c_str() );
+
+	strcat( ruta_homography,".xml");
+
+	cout << ruta_homography << endl;
+}
+
+
+/************************************************
+Crear la ruta de la homografia
+************************************************/
+void camara::crear_ruta_homografiaPlanoPlaca (void)
+{
+	string conf = int2string(config); //num_camaras
+	strcat( ruta_homographyPlanoPlaca, conf.c_str() );
+
+	string sistVis = int2string(idSV);  //idSV
+	strcat( ruta_homographyPlanoPlaca, sistVis.c_str() );
+
+	string sancer = int2string(numPort);
+	strcat( ruta_homographyPlanoPlaca, sancer.c_str() );
+
+	strcat( ruta_homographyPlanoPlaca,".xml");
+
+	cout << ruta_homographyPlanoPlaca << endl;
+}
+
+
+
+/************************************************
+Crear la ruta del patron
+************************************************/
+void camara::crear_ruta_patron (void)
+{
+	string conf = int2string(config); //num_camaras
+	strcat( ruta_patron, conf.c_str() );
+
+	string sistVis = int2string(idSV);  //idSV
+	strcat( ruta_patron, sistVis.c_str() );
+
+	string sancer = int2string(numPort);
+	strcat( ruta_patron, sancer.c_str() );
+
+	strcat( ruta_patron,".xml");
+
+	cout  << ruta_patron << endl;
+}
+
+
+/************************************************
+Crear la ruta de la tabla de calibracion
+************************************************/
+void camara::crear_ruta_tablaCalibracion (void)
+{
+	string conf = int2string(config); //num_camaras
+	strcat( ruta_tablaCalibracion, conf.c_str() );
+
+	string sistVis = int2string(idSV);  //idSV
+	strcat( ruta_tablaCalibracion, sistVis.c_str() );
+
+	string sancer = int2string(numPort);
+	strcat( ruta_tablaCalibracion, sancer.c_str() );
+
+	strcat( ruta_tablaCalibracion,".cnf");
+
+	cout  << ruta_tablaCalibracion << endl;
+
+}
+
+
+/************************************************
+Fixar el port de la camara
+************************************************/
+void camara::setPort 	(int p7, int p11, int p12)
+{
+	portMUX[0] = p7; portMUX[1] = p11; portMUX[2] = p12;
+}
+
+
+/************************************************
+Inicialisar Textura
+************************************************/
+void camara::Init_Textura_Groc(void)
+{
+    for(int k=0; k<431*480*4; k=k+4)
+    {
+        vector_mostrar_ant[k]  =   0;
+        vector_mostrar_ant[k+1]=   0;
+        vector_mostrar_ant[k+2]=   0;
+        vector_mostrar_ant[k+3]= 255;
+    }
+
+    for(int k=0; k<431*480*4; k=k+4)
+    {
+        vector_mostrar_minim_error[k]  = 255;
+        vector_mostrar_minim_error[k+1]= 127;
+        vector_mostrar_minim_error[k+2]=   0;
+        vector_mostrar_minim_error[k+3]= 255;
+    }
+
+    mostrar_tex.SetPixels( vector_mostrar_ant );
+
+}
+
+
+/************************************************
+Textura Blanca
+************************************************/
+void camara::texturaBlanca(void)
+{
+
+    for(int cnt=0; cnt<CNTA; cnt=cnt+2 )
+    {
+        long int posIM  = tabla_calibracion[cnt];
+        long int posTEX = tabla_calibracion[cnt+1];
+
+         ImagenDisplayVector[posTEX]   = 255;
+         ImagenDisplayVector[posTEX+1] = 255;
+         ImagenDisplayVector[posTEX+2] = 255;
+         ImagenDisplayVector[posTEX+3] = 255;
+    }
+
+}
+
+/************************************************
+Textura Blanca
+************************************************/
+void sistema_visio::texturaColor(int Rc, int Gc, int Bc )
+{
+
+    for(int k=0; k<855*480*4; k=k+4 )
+    {
+
+         ImagenDisplayVector[k]   = Rc;
+         ImagenDisplayVector[k+1] = Gc;
+         ImagenDisplayVector[k+2] = Bc;
+         ImagenDisplayVector[k+3] = 255;
+    }
+
+}
+
+
+/************************************************
+Inicialisar Fondo
+************************************************/
+void camara::Init_Textura(void)
+{
+
+	for(int cnt=0; cnt<CNTA; cnt=cnt+2 )
+	{
+		long int posIM  = tabla_calibracion[cnt];
+		long int posTEX = tabla_calibracion[cnt+1];
+
+		ImagenDisplayVector[posTEX]   = 255;
+		ImagenDisplayVector[posTEX+1] =  50;
+		ImagenDisplayVector[posTEX+2] =   0;
+		ImagenDisplayVector[posTEX+3] = 255;
+	}
+}
+
+
+/************************************************
+Selección de CAMARA
+************************************************/
+bool camara::Seleccio_CAM(void)
+{
+
+	digitalWrite( pin_7 ,  portMUX[0]);	//Selection
+	digitalWrite( pin_11,  portMUX[1]);	//Enable 1
+	digitalWrite( pin_12,  portMUX[2]);	//Enable 2
+
+}
+
+
+/************************************************
+ Procedimiento para Calibrar Display/Cámara
+************************************************/
+bool camara::CE_Calibrar (void)
+{
+
+	existeArchivo = existe(ruta_tablaCalibracion);
+
+	Seleccio_CAM();
+	int N_Ite=4;
+
+	dibuixar_patro_calibracio();
+	usleep(500000);
+
+	if(!calibrada)
+	{
+		for ( int cnt_bucle=0 ; cnt_bucle<=N_Ite ; cnt_bucle++ )
+		{
+			CE_Capturar();	
+			guardarTest("./Patro", quadrat);
+			// CALCULA HOMOGRAFIA (MATRIU DE CALIBRACIO)
+			if( calcular_matriz_calibracion_inversa() )
+			{
+				calibrada=true;			
+				break;
+			}
+		}
+	}
+
+/*
+	// CALCULA LA TABLA ASSOCIADA A LA MATRIU DE CALIBRACIO (MENYS TEMPS COMPUTACIONAL)
+	if( (calibrada && recalibrar) || !existeArchivo ){
+		Calculo_Tabla_Calibracion();
+				//Calculo_Tabla_CalibracionDirecta();
+		Init_Textura();
+	}
+
+//	if(!recalibrar){
+		loadTablaCalibracion();
+//	}
+*/
+	return calibrada;
+
+}
+
+
+/*******************************************************************
+	Dibuixa el patro en el display per a calcular la calibracio
+********************************************************************/
+void camara::dibuixar_patro_calibracio (void)
+{
+	float pantalla_x, pantalla_y;
+
+	BeginFrame();
+
+	int fonfo=0;
+	ILLUMINACIO (ImagenDisplayTextura, 0,0,0, NULL);
+	for(int ite=0; ite<90; ite++) //42
+	{
+		if(ite%2) //UNO SÍ UNO NO
+		{
+			pantalla_x = puntos_pantalla[ite][0]*escala +  OFFSET_X;
+			pantalla_y = puntos_pantalla[ite][1]*escala +  OFFSET_Y;
+
+			DrawPuntRect    ( ImagenDisplayTextura, pantalla_x, pantalla_y, ImagenDisplayTextura );
+			DrawTextureRect ( ImagenDisplayTextura, -1.0f, -1.0f, 1.0f, 1.0f, NULL);
+		}
+	}	
+	EndFrame();
+}
+
+
+/*******************************************************************
+ Calcular la Matriz de Calibracion Inversa entre Display y Cámara
+********************************************************************/
+bool camara::calcular_matriz_calibracion_inversa( void )
+{
+	bool found = false;
+	unsigned char* image_wb = (unsigned char*) malloc (sizeof(char)*WIDTH_FRAME*HEIGHT_FRAME);
+	memset( image_wb, 255, WIDTH_FRAME*HEIGHT_FRAME);
+
+	Size imageSize;
+
+	vector<Point2f> imagePoints;
+	vector<Point2f> displayPoints;
+
+	Size boardSize;
+	boardSize.height = 11; //7;
+	boardSize.width  = 4;  //4; //3;
+
+	float squareSize;            // The size of a square in your defined unit (point, millimeter,etc).
+	squareSize = 42*escala;
+	
+	for( int cnt=0; cnt<WIDTH_FRAME*HEIGHT_FRAME; cnt++ )
+		if( quadrat[cnt]>20 )
+			image_wb[cnt]=0;
+
+	Mat view = Mat (Size(WIDTH_FRAME,HEIGHT_FRAME), CV_8UC1, image_wb );
+	loadHomographyInverseParams();
+	loadHomographyNivelPlaca();
+	
+
+	if (!view.empty())
+	{
+		imageSize = view.size();  // Format input image.
+		
+		found = findCirclesGrid(view, boardSize, imagePoints, CALIB_CB_ASYMMETRIC_GRID);
+		for (int kk=0; kk<imagePoints.size();kk++) {
+			imagePoints.at(kk) = imagePoints.at(kk)*3.0;
+			//cout << imagePoints.at(kk) << endl;
+		}
+		
+		if (found)             
+		{
+			cout << "Patrón Encontrado!!! Calibrando... " << imagePoints.size() << " puntos" << endl;
+			// Crea Patrón
+			for (int i=0; i<boardSize.height ; i++)
+				for ( int j=0; j<boardSize.width; j++)
+					displayPoints.push_back(Point2f( OFFSET_X + (i*squareSize*texelRatio), OFFSET_Y + ( ( 2*j + i%2)*squareSize) )); // 105.191061452
+
+			// Crea la homografía
+			Mat dHiActual = findHomography(displayPoints, imagePoints);
+			double displayPointsErr = this->computeReprojectionErrorsH( displayPoints, imagePoints, dHiActual, &corregir_x, &corregir_y);
+
+			cout << "Error Actual: " << displayPointsErr << ", Error Guardado: " << erroCalibracio << endl;
+
+			// Si el error calculado es más grande que el guardo
+			if(1 ) //displayPointsErr > erroCalibracio)
+			{
+				cout << "Aplicar nueva calibración..." <<endl;
+				dHi=dHiActual;
+				this->saveInverseHomographyParams( imagePoints, displayPoints, dHiActual, displayPointsErr);
+
+				// Aplicar desplaçament a l'homografia per a corregir l'error sistematic 
+				/*Mat Trans = Mat::zeros( 3, 3, CV_64FC1);
+				Trans.at<double>(0,0)=1;				Trans.at<double>(0,2)= corregir_x;
+							   Trans.at<double>(1,1)= 1;	Trans.at<double>(1,2)= corregir_y;
+											Trans.at<double>(2,2)= 1;
+				dHi=Trans*dHiActual;
+				displayPointsErr = this->computeReprojectionErrorsH( displayPoints, imagePoints, dHi, &corregir_x, &corregir_y);
+				this->saveInverseHomographyParams( imagePoints, displayPoints, dHi, displayPointsErr);
+				*/
+				recalibrar=true;
+			}
+
+		}
+		else{
+			cout << "No ha calibrado!!! Cargando calibración guardada" << endl;
+			//loadHomographyInverseParams();
+		}
+	}
+
+	dHiInv=dHi.inv();
+
+
+	free(image_wb);
+	return found;
+}
+
+
+/**************************************************************************************
+ Convierte la Matriz de calibracion en una Tabla de Asignacion (Tabla de Calibracion)
+***************************************************************************************/
+int camara::Calculo_Tabla_Calibracion ( void )
+{
+	
+	//if(recalibrar || !existeArchivo)
+	{
+		int Ancho_Pant = (int)floor(ImagenDisplayTextura->GetWidth());
+		int Alto_Pant  = (int)floor(ImagenDisplayTextura->GetHeight());
+
+		Mat punt = Mat(3, 1, CV_64FC1);
+
+		//loadHomographyInverseParams();
+
+		int cnt = 0;
+		double limiteEnY1, limiteEnY2, m1, b1;
+		if(rectas.rows>0)
+		{
+			m1 = rectas.at<double>(1,0);
+			b1 = rectas.at<double>(1,1);
+		}
+
+		for(int cnt_i=0; cnt_i<Ancho_Pant; cnt_i++ )
+		{
+			for(int cnt_j=0; cnt_j<Alto_Pant; cnt_j++ )
+			{
+				punt.at<double>(0,0)= (double)cnt_i; 
+				punt.at<double>(1,0)= (double)cnt_j; 
+				punt.at<double>(2,0)= 1.0;
+
+
+				Mat punt_T = dHi*punt;
+
+				int y = (int)(punt_T.at<double>(0,0)/punt_T.at<double>(0,2));
+				int x = (int)(punt_T.at<double>(0,1)/punt_T.at<double>(0,2));
+
+				if(rectas.rows>0 && idCam==1)
+				{
+					limiteEnY1 = m1 * cnt_i + b1 + 5;
+					limiteEnY2 = m1 * cnt_i + b1;
+				}
+				if(rectas.rows>0 && idCam==2)
+				{
+					limiteEnY1 = m1 * cnt_i + b1 - 5;
+					limiteEnY2 = m1 * cnt_i + b1;
+				}
+				//else limiteEnY1=cnt_j-100;
+
+
+				if(x>=0 && x<HEIGHT_FRAME && y>=0 && y<WIDTH_FRAME && cnt_j>limiteEnY1 && idCam==1 )
+				{
+					
+					long int posIM  = x*WIDTH_FRAME + y;
+					long int posTEX = (cnt_j*floor(Ancho_Pant) + cnt_i)*4;
+
+					tabla_calibracion[cnt]   = posIM;
+					tabla_calibracion[cnt+1] = posTEX;
+
+					cnt=cnt+2;
+				}
+				if(x>=0 && x<HEIGHT_FRAME && y>=0 && y<WIDTH_FRAME && cnt_j<=limiteEnY1 && cnt_j>=limiteEnY2 && idCam==1 )
+				{
+					long int posTEX = (cnt_j*floor(Ancho_Pant) + cnt_i)*4;
+					detectadaInterseccion[posTEX] = 1;
+				}
+
+
+				if(x>=0 && x<HEIGHT_FRAME && y>=0 && y<WIDTH_FRAME && cnt_j<limiteEnY1 && idCam==2 )
+				{
+				
+					long int posIM  = x*WIDTH_FRAME + y;
+					long int posTEX = (cnt_j*floor(Ancho_Pant) + cnt_i)*4;
+
+					tabla_calibracion[cnt]   = posIM;
+					tabla_calibracion[cnt+1] = posTEX;
+
+					cnt=cnt+2;
+				}
+
+				if(x>=0 && x<HEIGHT_FRAME && y>=0 && y<WIDTH_FRAME && cnt_j>=limiteEnY1 && cnt_j<=limiteEnY2 && idCam==2 ) //&& cnt_j>limiteEnY2
+				{
+					long int posTEX = (cnt_j*floor(Ancho_Pant) + cnt_i)*4;
+					detectadaInterseccion[posTEX] = 1;
+				}
+			}
+		}
+
+		CNTA = cnt;
+		cout << "Tabla construida con tamaño: " << CNTA << " Bytes" << endl;
+		saveTablaCalibracion();
+
+		return cnt;
+	}
+}
+
+
+/**************************************************************************************
+ Convierte la Matriz de calibracion en una Tabla de Asignacion (Tabla de Calibracion)
+***************************************************************************************/
+/*
+int camara::Calculo_Tabla_CalibracionDirecta ( void )
+{
+	int Ancho_Pant = (int)floor(ImagenDisplayTextura->GetWidth());
+	int Alto_Pant  = ImagenDisplayTextura->GetHeight();
+
+	Mat punt = Mat(Size(1, 3), CV_64FC1, Scalar(0,0,1));
+
+
+	//Mat dHi;
+	loadHomographyInverseParams();
+	cout << "dHi = " << dHi << endl;
+	dHiInv=dHi.inv();
+
+	int posTEX = 0;
+	
+	for(int cnt_i=0; cnt_i<1944; cnt_i++ )
+	{
+		for(int cnt_j=0; cnt_j<1944; cnt_j++ )
+		{
+			punt.at<double>(0,0)=  cnt_i;
+			punt.at<double>(0,1)=  cnt_j;
+			punt.at<double>(0,2)=    1.0;
+
+			Mat punt_T = dHiInv*punt;
+			int y = (int)(punt_T.at<double>(0,0)/punt_T.at<double>(0,2));
+			int x = (int)(punt_T.at<double>(0,1)/punt_T.at<double>(0,2));
+
+			if(x>=0 && x<Ancho_Pant && y>=0 && y<Alto_Pant)
+			{
+				long int posIM = (y*floor(Ancho_Pant) + x);
+				tabla_calibracionDirecta[posTEX] = posIM;
+				//cout << x << ", " << y << " = " << posTEX << endl;
+				posTEX++;	
+			}		
+		}
+	}
+
+	cout << posTEX << endl;
+
+	return posTEX;
+}
+
+*/
+/************************************************
+ Captura imagen
+************************************************/
+bool camara::CE_Capturar (void)
+{
+	Seleccio_CAM();
+
+	const void* frame_data; int frame_sz;
+	for(int k=0; k<4; k++)
+	{
+		while( !cam->BeginReadFrame(0,frame_data,frame_sz) ) {};			
+		cam->EndReadFrame(0);
+	}
+	
+	if(WIDTH_HD==WIDTH_FRAME)
+		memcpy(quadrat,(unsigned char*)frame_data, frame_sz );
+	else 
+		QUADRAT (quadrat, (unsigned char*)frame_data);
+}
+
+
+/**********************************************************************
+Calculo de Error de Compensacion
+***********************************************************************/
+// Llama a la función calcular error compensación y crea un archivo
+bool camara::CE_Error_Compensacion (void)
+{
+
+	if(CNTA)
+	{
+		//float error = this->Calcular_Error_Compensacion();
+		float error = this->Calcular_Luz_Media();
+		cout << "Media " << idSV << ": " << error << endl;
+
+		if(idSV==1) ficherEstudiBateriaMatlab1 << error << ", " << endl;
+		if(idSV==2) ficherEstudiBateriaMatlab2 << error << ", " << endl;
+
+		char buf[80];
+		time_t rawtime;
+		struct tm *timeinfo;
+		time(&rawtime);
+		timeinfo = localtime(&rawtime);
+		strftime(buf, sizeof(buf), "%X", timeinfo);
+		//Hora_Actual(buf);
+
+		if(idSV==1) ficherEstudiBateria1 << buf << ", " << error << endl;
+		if(idSV==2) ficherEstudiBateria2 << buf << ", " << error << endl;
+	}
+}
+
+
+// Calcula el error de compensación 
+float camara::Calcular_Error_Compensacion ( void )
+{
+	long int error_total=0;
+	int N= CNTA/2;
+
+	for( int cnt=0 ; cnt < CNTA ; cnt=cnt+2 ) 
+	{
+		long int posIM  = tabla_calibracion[cnt];
+		error_total = error_total + abs ( 48-quadrat[posIM] );
+	}
+
+	float Mija_error = (float)(  (double)error_total/(double)N );
+
+	return Mija_error;
+}
+
+
+
+/************************************************
+Calcula intensidad de luz meddia
+************************************************/
+float camara::Calcular_Luz_Media ( void )
+{
+	long int total=0;
+	int N= CNTA/2;
+
+	for( int cnt=0 ; cnt < CNTA ; cnt=cnt+2 ) 
+	{
+		long int posIM  = tabla_calibracion[cnt];
+		total += quadrat[posIM];
+	}
+
+	float Mija = (float)(  (double)total/(double)N );
+
+	return Mija;
+}
+
+
+/************************************************
+Compensa la iluminación del Display
+************************************************/
+bool camara::CE_Compensar ( void )
+{
+
+	// UNA VOLTA CALCULADA LA TABLA COMPENSA D'UNA FORMA MES EFICIENT
+	if(CNTA)
+        	TransformarImagen_Y_CompensarDisplay();
+
+	Sum_It_Comp();
+}
+
+
+/************************************************
+Compensa Rápido la iluminación del Display
+************************************************/
+bool camara::CE_Compensar_Rapido ( void )
+{
+	/*
+	if(idSV==2)
+	{
+		int OrigeEnx=30,OrigeEny=50,AmpleQuadrat=350,AltQuadrat=350;
+		display->borrarQuadrat( OrigeEnx, OrigeEny, AmpleQuadrat, AltQuadrat );
+		display->dibuixar();
+	}*/
+
+    	CE_Capturar();
+
+	// UNA VOLTA CALCULADA LA TABLA COMPENSA D'UNA FORMA MES EFICIENT
+	if(CNTA)
+	{
+		Seleccio_CAM();
+		usleep(3000);
+        	while(!min_found)
+        	{
+			CE_Capturar();
+			TransformarImagen_Y_CompensarDisplay ( true );
+			Sum_It_Comp();
+			display->dibuixar();
+		}
+	}
+
+    return min_found;
+}
+
+
+// Transformar y Compensar Imagen
+int camara::TransformarImagen_Y_CompensarDisplay ( bool automaticStop )
+{
+	long int error_total=0;
+	int N = CNTA/2;
+
+	for(int cnt=0; cnt<CNTA; cnt=cnt+2 )
+	{
+		long int posIM  = tabla_calibracion[cnt];
+		long int posTEX = tabla_calibracion[cnt+1];
+
+		int roig = ImagenDisplayVector[posTEX];
+		int vert = ImagenDisplayVector[posTEX+1];
+		int blau = ImagenDisplayVector[posTEX+2];
+		//int alfa = ImagenDisplayVector[posTEX+3];
+				
+		int error = (int)(floor(0.9*( 48-quadrat[posIM])));
+
+		int col_global= roig + vert + blau + error;
+
+		error_total = error_total + abs(48 - quadrat[posIM]);
+
+		ImagenDisplayVector[posTEX]   = col_global;
+		ImagenDisplayVector[posTEX+1] = col_global-255;
+		ImagenDisplayVector[posTEX+2] = col_global-510;
+		ImagenDisplayVector[posTEX+3] = 255;
+
+		if (col_global-510<0)   ImagenDisplayVector[posTEX+2] =0;
+		if (col_global-255<0)   ImagenDisplayVector[posTEX+1] =0;
+		if (col_global<0)       ImagenDisplayVector[posTEX]   =0;
+		if (col_global-510>255) ImagenDisplayVector[posTEX+2] =255;
+		if (col_global-255>255) ImagenDisplayVector[posTEX+1] =255;
+		if (col_global>255)     ImagenDisplayVector[posTEX]   =255;
+	}
+
+
+	float Mija_error 	= (float)( (double)error_total/(double)N);										
+	float Mija_error_ant	= mija_error_compensacio;
+
+	Inc_It_Error();
+
+	// MET = Mija Error Total
+	float MET_Act = (MET_Ant*( Iteracions_Compensacio-1) + Mija_error) / Iteracions_Compensacio;
+	float dMET = MET_Ant - MET_Act;
+	float dM = Mija_error_ant - Mija_error;
+	//float alpha = Get_alpha();
+	//alpha = alpha + dM;
+	//Set_alpha( abs(dM) );
+
+	//if(Iteracions_Compensacio==1) Set_alpha( alpha );
+
+
+	// Calcul del minim
+	if( (Mija_error < minim_error_compensacio) && !min_found )
+	{
+		minim_error_compensacio = Mija_error;
+        	memcpy( vector_mostrar_minim_error, vector_mostrar_ant, 480*431*4);
+        	Init_It_Error();
+        	cout << "Encontrado." << endl;
+
+	}
+	cout << "Media: " << Mija_error <<  ", minimo: " << minim_error_compensacio << endl;
+
+	// Bloqueig
+	if( !min_found && It_Erro>15) //abs(dMET)<0.1 && abs(dM)<0.1 &&
+	{
+		min_found=true;
+		//codicImage=0;
+		Init_It_Imagens();
+		//pSVx->Init_It_Imagens();
+	}
+
+	//bool reset_comp = Get_Reset_Comp();
+	// Reset
+	if( reset_comp ) //if( abs(dM)>6 && min_found )
+	{
+		Set_Reset_Comp( false );
+		Init_Textura();
+		//Init_Textura_Groc();
+		Init_Erro_Minim();
+		Init_Erro_Mija();
+		Init_It_Error();
+		Init_MET_Ant(); //Mija Error Total An
+		Init_It_Comp();
+		min_found = false;
+	}
+
+	//cout << "Mija Ant: " << Mija_error_ant << ", Mija Actual: " << Mija_error  << ", dM: " << dM << endl;
+	//cout << "MET_Ant: "  << MET_Ant << ", MET_Act: "  << MET_Act << ", dMET: "  << dMET << endl;
+	//cout << "Minim      : "  << minim_error_compensacio << ", Alpha: " << alpha << endl;
+
+	MET_Ant = MET_Act;
+	mija_error_compensacio = Mija_error;
+
+
+	//mostrar_tex->SetPixels( vector_mostrar_ant );  ImagenDisplayTextura
+	if ( !min_found ) mostrar_tex.SetPixels( vector_mostrar_ant );
+	if (  min_found )
+	{
+		mostrar_tex.SetPixels( vector_mostrar_minim_error );
+		cout << "Bloqueado" << endl;
+	}
+
+	return min_found;
+}
+
+
+/**********************************************************************
+Compensación con 4 cámaras
+***********************************************************************/
+int camara::TransformarImagen_Y_CompensarDisplay ( void )
+{
+	long int error_total=0;
+
+	for(int cnt=0; cnt<CNTA; cnt=cnt+2 )
+	{
+		long int posIM  = tabla_calibracion[cnt];
+		long int posTEX = tabla_calibracion[cnt+1];
+
+		int roig = ImagenDisplayVector[posTEX  ];
+		int vert = ImagenDisplayVector[posTEX+1];
+		int blau = ImagenDisplayVector[posTEX+2];
+		//int alfa = ImagenDisplayVector[posTEX+3];
+				
+		int error = (int)(floor(0.9*( 48-quadrat[posIM])));
+
+		int col_global= roig + vert + blau + error;
+
+		error_total = error_total + abs( 48-quadrat[posIM]);
+
+		ImagenDisplayVector[posTEX  ] = col_global;
+		ImagenDisplayVector[posTEX+1] = col_global-255;
+		ImagenDisplayVector[posTEX+2] = col_global-510;
+		ImagenDisplayVector[posTEX+3] = 255;
+
+		if (col_global-510<0)   ImagenDisplayVector[posTEX+2] =0;
+		if (col_global-255<0)   ImagenDisplayVector[posTEX+1] =0;
+		if (col_global<0)       ImagenDisplayVector[posTEX  ] =0;
+		if (col_global-510>255) ImagenDisplayVector[posTEX+2] =255;
+		if (col_global-255>255) ImagenDisplayVector[posTEX+1] =255;
+		if (col_global>255)     ImagenDisplayVector[posTEX  ] =255;
+	}
+
+    return false;
+}
+
+
+/************************************************
+Guarda la Imagen
+************************************************/
+void* CE_Guardar ( void* SistVis )
+{
+	sistema_visio *SV = (sistema_visio*) SistVis;
+	bufferCircular *Buffer = SV->getBuffer();
+
+	unsigned char* imageAgravar = (unsigned char*) malloc ( sizeof(char)* WIDTH_FRAME * HEIGHT_FRAME* 2);
+
+	SV->Init_It_Imagens();		// Inicia el conteig del numero d'imagens a 0
+
+	while(1)
+	{
+		do
+		{
+		    usleep(1000);
+		}while(Buffer->checkAvail()<=0);
+
+		cout << "En Cola: " << Buffer->checkAvail() << endl;
+
+		struct timespec t1 = Inicia_Temporisador();
+		char rutaGrabacion[150]="";
+		int tamTotal;
+		Buffer->remImage( imageAgravar, rutaGrabacion, tamTotal);
+		cout << "Guardada: " << rutaGrabacion << ", Tam: " << tamTotal << endl;
+		/*	
+		FILE *f = fopen(rutaGrabacion,"w");
+		if (f == 0)
+			printf("No he pogut obrir %s\n", rutaGrabacion);
+		else
+		{
+			fwrite( imageAgravar,1,tamTotal,f);
+			fclose(f);
+		}*/
+		Mat dig(Size(2592, 2592), CV_8UC1, imageAgravar);
+		imwrite( rutaGrabacion, dig);
+		cout << "Temps guardar: "<< Medix_temps(t1) << endl;
+	}
+	free(imageAgravar);
+
+}
+/************************************************
+Guarda la Imagen
+************************************************/
+/*void* CE_Guardar ( void* SistVis )
+{
+	sistema_visio *SV = (sistema_visio*) SistVis;
+
+	SV->Init_It_Imagens();		// Inicia el conteig del numero d'imagens a 0
+	unsigned char* circul   = (unsigned char*) malloc (sizeof(char) *WIDTH_FRAME*HEIGHT_FRAME);
+
+	while(1)
+	{
+		int estat;
+		do
+		{
+			usleep(1000);
+			estat = SV->Get_Estat_Guardar();
+		} while(estat != FES_HO);
+
+		char nombre[20]="", ruta[50] = "";
+		if(SV->GetId()==1) strcpy(ruta, nom_proyecte1);
+		if(SV->GetId()==2) strcpy(ruta, nom_proyecte2);
+		int it = SV->Get_It_Imagens();
+
+		//strcpy( ruta, DIR_PEN);
+		GEN_NOM(it, (char*)nombre);
+		strcat(ruta, nombre);
+
+		SV-> Set_Estat_Guardar (OCUPAT);
+
+		// Graba círculo
+		if(SV->isCapturando())
+		{
+			cout << "Grabada:" << ruta << endl;
+			int TAM = CIRCUL (circul, (unsigned char*)(SV->Get_Vect_Im()));
+			FILE *f = fopen(ruta,"w");
+			if (f == 0) 
+				printf("*No he pogut obrir %s\n", ruta);
+			else
+			{
+				fwrite((unsigned char*)circul,1,TAM,f);   //fwrite(image_reb,1,tam_reb,f);
+				fclose(f);
+			}
+		}
+	
+		//SV->Sum_It_Imagens(); 		// Suma numero d'image guardada
+		SV-> Set_Estat_Guardar (ACABAT);	// Posa l'Estat com a Acabat
+		SV-> Set_Resultat_Guardar (true); 	// Posa el Resultat com a Guardat
+
+	}
+	//#pragma omp parallel shared(thread_id, cam)
+	//{
+	//	#pragma omp sections
+	//	{
+	//		#pragma omp section		
+	//	}
+	//}
+
+}*/
+
+
+/************************************************
+ Conexión con el Servidor
+************************************************/
+void* Conexion_Servidor (void* SistVis)
+{
+	unsigned char* circul   = (unsigned char*) malloc (sizeof(char) *WIDTH_FRAME*HEIGHT_FRAME);
+	sistema_visio *SV = (sistema_visio*) SistVis;
+
+	// Configurar TCP/IP
+	char IP[20]="192.168.1.102";
+	
+	struct hostent *host;
+        struct sockaddr_in server_addr;
+
+	int sock;
+	int sin_size;
+	host = gethostbyname(IP);          
+
+	memset(&server_addr, 0, sizeof(server_addr));
+	server_addr.sin_family = AF_INET; 
+	server_addr.sin_port = htons(444);
+	//if(SV->GetId()==1) server_addr.sin_port = htons(444);
+	//if(SV->GetId()==2) server_addr.sin_port = htons(444);
+	server_addr.sin_addr = *((struct in_addr *)host->h_addr);   
+	bzero(&(server_addr.sin_zero),8);
+
+	
+	if ((sock = socket(AF_INET, SOCK_STREAM, 0)) == -1)
+		perror("Socket");
+
+	printf("Buscando servidor: (%s , %d) \n", inet_ntoa(server_addr.sin_addr),ntohs(server_addr.sin_port));
+	do
+	{	
+		usleep(50000);
+	}while(connect(sock, (struct sockaddr *)&server_addr, sizeof(struct sockaddr))==-1); // || !con_conexion
+	
+	printf("Conectado a: (%s , %d) \n", inet_ntoa(server_addr.sin_addr),ntohs(server_addr.sin_port));
+
+	while(1)
+	{
+		int estat = SV->Get_Estat_Enviament();	
+		if(estat==FES_HO)
+		{
+			SV->Set_Estat_Enviament(OCUPAT);
+			int TAM = CIRCUL (circul, (unsigned char*)(SV->Get_Vect_Im()));
+			//int TAM = SV->Get_TAM();
+
+            		//SV->Configuracio_Remota(sock, TAM, temperatura, SV->GetId(), SV->Get_It_Imagens());  //2966132
+            		//bool estado_conexion = ENVIAR_IMAGE( (char*)circul, sock, TAM );
+
+			struct timespec t0 = Inicia_Temporisador();
+            		SV->Configuracio_Remota(sock, 2592*2592, temperatura, SV->GetId(), SV->Get_It_Imagens());  //2966132
+            		bool estado_conexion = ENVIAR_IMAGE( (char*)(SV->Get_Vect_Im()), sock,  2592*2592 );
+			cout << "Temps Envio: "<< Medix_temps(t0) << endl;
+
+			SV->Set_Estat_Enviament(ACABAT);
+			SV->Set_Resultat_Enviament(estado_conexion);
+		}
+	}
+	free(circul);
+	close(sock);
+}
+
+
+/************************************************
+ Conexión con el Servidor RASPBERRY
+************************************************/
+void* clienteRASPBERRY (void* SistVis)
+{
+	unsigned char* imageRebuda   = (unsigned char*) malloc (sizeof(char) * 860*480*4);
+	memset(imageRebuda, 0, 860*480*4);
+	sistema_visio *SV = (sistema_visio*) SistVis;
+
+	// Configurar TCP/IP
+	char IP[20]="192.168.1.20";
+	
+	struct hostent *host;
+        struct sockaddr_in server_addr;
+
+	int sock;
+	int sin_size;
+	host = gethostbyname(IP);          
+
+	memset(&server_addr, 0, sizeof(server_addr));
+	server_addr.sin_family = AF_INET; 
+	server_addr.sin_port = htons(400);
+	server_addr.sin_addr = *((struct in_addr *)host->h_addr);   
+	bzero(&(server_addr.sin_zero),8);
+
+	
+	if ((sock = socket(AF_INET, SOCK_STREAM, 0)) == -1)
+		perror("Socket");
+
+	printf("Buscando servidor: (%s , %d) \n", inet_ntoa(server_addr.sin_addr),ntohs(server_addr.sin_port));
+	do
+	{	
+		usleep(50000);
+	}while(connect(sock, (struct sockaddr *)&server_addr, sizeof(struct sockaddr))==-1); // || !con_conexion
+	
+	printf("Conectado a: (%s , %d) \n", inet_ntoa(server_addr.sin_addr),ntohs(server_addr.sin_port));
+
+	while(1)
+	{
+		int estat = SV->Get_Estat_Enviament();	
+		//if(estat==FES_HO)
+		{
+			//SV->Set_Estat_Enviament(OCUPAT);
+			// Envia Image
+			int tamany=860*480*4;
+			//if( (send(sock, SV->getImagenDisplay(), tamany, 0)) ==-1 )
+			if( (send(sock, imageRebuda, tamany, 0)) ==-1 )
+				cout << "Error en envío Display" << endl;
+
+			//SV->Set_Estat_Enviament(ACABAT);
+			//SV->Set_Resultat_Enviament(estado_conexion);
+		}
+	}
+	close(sock);
+}
+
+
+/************************************************
+ Conexión con el Cliente RASPBERRY
+************************************************/
+void* servidorRASPBERRY (void* SistVis)
+{
+	unsigned char* imageRebuda   = (unsigned char*) malloc (sizeof(char) *861*480*4);
+	sistema_visio *SV = (sistema_visio*) SistVis;
+
+	// Configurar TCP/IP
+	char IP[20]="192.168.1.20";
+	int host_port= 1101;
+	void* dato =0;
+
+	struct sockaddr_in my_addr;
+	int * p_int ;
+	int err;
+
+	int hsock = ::socket(AF_INET, SOCK_STREAM, 0);
+	if( hsock == -1)
+	{
+		printf("Error initializing socket %d\n", errno);
+	}
+
+	p_int = (int*)malloc(sizeof(int));
+	*p_int = 1; //
+
+	if( (::setsockopt(hsock, SOL_SOCKET, SO_REUSEADDR, (char*)p_int, sizeof(int)) == -1 ))
+	{
+		printf("Error setting options %d\n", errno);
+		free(p_int);
+	}
+	free(p_int);
+
+	my_addr.sin_port = htons(400);
+	my_addr.sin_addr.s_addr = inet_addr(IP);
+	my_addr.sin_family = AF_INET;
+	bzero(&(my_addr.sin_zero),8);
+
+	if( ::bind( hsock, (sockaddr*)&my_addr, sizeof(my_addr)) == -1 )
+	{
+		fprintf(stderr,"Ha habido un error al intentar enlazar con el socket del PUERTO %d, asegurese que el cable está conectado y que la dirección IP es correcta.\n",errno);
+	}
+
+	if(::listen( hsock, 10) == -1 )
+	{
+		fprintf(stderr, "Error listening %d\n",errno);
+	}
+
+	socklen_t addr_size = sizeof(sockaddr_in);
+	int csock1 = accept( hsock, (sockaddr*)&my_addr, &addr_size);
+	cout << "¡Conectat!" << endl;
+
+	int rebut;
+	int tamRebut=860*480*4;
+	while(1)
+	{
+		int rep=0;
+		do{
+			rebut = recv(csock1, &imageRebuda[rep], tamRebut-rep, 0);
+			rep = rep + rebut;
+		}while(rebut>=0 && rep<tamRebut);
+		memcpy( SV->getImagenDisplay(), imageRebuda, tamRebut);
+		cout << "Rebuda" << endl;
+	}
+	
+
+}
+
+
+/*************************************************************************************************************
+	Calcular los errores de proyección
+**************************************************************************************************************/
+double camara::computeReprojectionErrorsH(const vector<Point2f>& imagePoints,
+	const vector<Point2f>& displayPoints, const Mat& dHiActual, float* corregir_x, float* corregir_y)
+{
+	double totalErr = 0, err;
+	double dx[44], dy[44];
+	double dxmax=0, dymax=0, dxmin=10000, dymin=10000;
+	
+	int tamany = (int)imagePoints.size();
+	vector<Point2f> displayPointsEst(tamany);
+
+	//perspectiveTransform(to be transformed, output, dHiActual);
+	perspectiveTransform(imagePoints, displayPointsEst, dHiActual);
+
+	char ruta[100]="./analisis/errores_data";
+	string ID = int2string(idCam);
+	strcat( ruta, ID.c_str() );
+	strcat( ruta,".xml");
+	
+
+	FileStorage fs(ruta, FileStorage::WRITE);
+	for (int kk=0; kk < tamany; kk++) {
+		dx[kk] = displayPointsEst[kk].x - displayPoints[kk].x;
+		dy[kk] = displayPointsEst[kk].y - displayPoints[kk].y;
+		//err = sqrt((dx*dx)+(dy*dy));
+		fs << "errorx" << dx[kk];
+		fs << "errory" << dy[kk];
+		*corregir_x += (float)dx[kk];
+		*corregir_y += (float)dy[kk];
+	}
+
+	for(int cnt=0; cnt<21; cnt++) if( dx[cnt]>dxmax ) dxmax = dx[cnt];
+	for(int cnt=0; cnt<21; cnt++) if( dy[cnt]>dymax ) dymax = dy[cnt];
+
+	for(int cnt=0; cnt<21; cnt++) if( dx[cnt]<dxmin ) dxmin = dx[cnt];
+	for(int cnt=0; cnt<21; cnt++) if( dy[cnt]<dymin ) dymin = dy[cnt];
+
+	*corregir_x = *corregir_x/28;
+	fs << "corregit_x" << *corregir_x;
+
+	*corregir_y = *corregir_y/28;
+	fs << "corregit_y" << *corregir_y;
+
+	fs << "dxmax" << dxmax;
+	fs << "dymax" << dymax;
+	fs << "dxmin" << dxmin;
+	fs << "dymin" << dymin;
+
+	fs.release();
+
+	err = norm(displayPoints, displayPointsEst, NORM_L2);
+	totalErr = err*err;
+	return std::sqrt(totalErr / tamany);
+}
+
+
+/********************************************************************************
+Guarda la Homografia Inversa en un archivo
+*********************************************************************************/
+void camara::saveInverseHomographyParams(vector<Point2f> displayPoints, vector<Point2f> imagePoints, Mat dHi, double displayPointsErr)
+{
+
+       cout << "Guardando datos de calibracion en... "<< ruta_homography << endl;
+
+	FileStorage fs(ruta_homography, FileStorage::WRITE);
+ 
+       if (!displayPoints.empty())
+       {
+             int tamany = (int)displayPoints.size();
+             Mat displayPtMat(2, tamany, CV_32FC1);
+             for (size_t i = 0; i < tamany; i++)
+             {
+                    displayPtMat.at<float>(0, i) = displayPoints[i].x;
+                    displayPtMat.at<float>(1, i) = displayPoints[i].y;
+             }
+             fs << "displayPoints" << displayPtMat;
+       }
+ 
+       if (!imagePoints.empty())
+       {
+             int tamany = (int)imagePoints.size();
+             Mat imagePtMat(2, tamany, CV_32FC1);
+             for (size_t i = 0; i < tamany; i++)
+             {
+                    imagePtMat.at<float>(0, i) = imagePoints[i].x;
+                    imagePtMat.at<float>(1, i) = imagePoints[i].y;
+             }
+             fs << "image_points" << imagePtMat;
+       }
+ 
+       fs << "dHi" << dHi;
+       fs << "displayPoints_reprojection_error" << displayPointsErr;
+ 
+}
+
+
+
+
+
+/********************************************************************************
+Cargar tabla de calibración
+*********************************************************************************/
+bool camara::loadTablaCalibracion (void)
+{
+
+	FILE * pFile;
+	long lSize;
+		
+	size_t result;
+
+	if((pFile = fopen ( ruta_tablaCalibracion , "rb" ))!=NULL) //dir_rep
+	{
+		cout << "Cargando Tabla Calibracion de Display..." << ruta_tablaCalibracion << endl;
+
+		if (pFile==NULL) {fputs ("File error",stderr); }
+
+		fseek (pFile , 0 , SEEK_END);
+		lSize = ftell (pFile);
+		rewind (pFile);
+
+		if (tabla_calibracion == NULL) {fputs ("Memory error!!!! ",stderr); }
+
+		result = fread (tabla_calibracion, sizeof(int), lSize, pFile);
+		if (result != lSize) {fputs ("Reading error!!!! ",stderr); }
+	
+	}
+	else
+	{
+		cout << "No hay archivo" << endl;
+		return false;
+	}
+	free (pFile);
+
+	cout << "VALOR: " << tabla_calibracion[0] << endl;
+	CNTA = (long int)lSize;
+	cout << "Cantidad: " << CNTA << "Bytes" << endl;
+	return true;
+
+}
+
+
+/********************************************************************************
+Guardar tabla de calibración
+*********************************************************************************/
+bool camara::saveTablaCalibracion (void)
+{
+	cout << "Guardando Tabla Calibracion..." << ruta_tablaCalibracion << endl;
+
+	FILE *f = fopen(ruta_tablaCalibracion,"w");
+
+	if (f == 0) 
+		printf("*No he pogut obrir %s\n", ruta_tablaCalibracion);
+	else
+	{
+		fwrite( tabla_calibracion, sizeof(int), CNTA, f);   //fwrite(image_reb,1,tam_reb,f);
+		fclose(f);
+	}
+
+	
+}
+
+/********************************************************************************
+Guarda la Homografia Inversa en un archivo
+*********************************************************************************/
+void camara::savePatron (Mat Mpatron)
+{
+
+	//cout << "Guardando datos de patrón en... "<< ruta_patron << endl;
+
+	FileStorage fs(ruta_patron, FileStorage::WRITE);
+	fs << "Mpatron" << Mpatron;
+
+ 
+}
+
+
+/********************************************************************************
+Carga la Homografia Inversa
+*********************************************************************************/
+void camara::loadHomographyInverseParams(void)
+{
+
+	if(!existe(ruta_homography))
+		cout << "No existe archivo: " << ruta_homography << endl;
+
+	//cout << "Cargando datos de calibracion... " << ruta_homography << endl;
+	FileStorage fs(ruta_homography, FileStorage::READ); 
+	fs["dHi"] >> dHi;
+	fs["displayPoints_reprojection_error"] >> erroCalibracio;
+
+}
+
+
+/********************************************************************************
+Carga la Homografia Inversa
+*********************************************************************************/
+void camara::loadHomographyNivelPlaca(void)
+{
+
+	if(!existe(ruta_homographyPlanoPlaca))
+		cout << "No existe archivo: " << ruta_homography << endl;
+
+	//cout << "Cargando datos de calibracion... " << ruta_homography << endl;
+	FileStorage fs(ruta_homographyPlanoPlaca, FileStorage::READ); 
+	fs["dHi"] >> dHiPlanoSuperior;
+	//fs["displayPoints_reprojection_error"] >> erroCalibracio;
+
+}
+
+
+/********************************************************************************
+Guarda el patrón
+*********************************************************************************/
+void camara::savePatron (void)
+{
+	//cout << "Guardando datos de patrón en... "<< ruta_patron << endl;
+
+	FileStorage fs(ruta_patron, FileStorage::WRITE);
+	fs << "OFFSET_X" << OFFSET_X;
+	fs << "OFFSET_Y" << OFFSET_Y;
+	fs << "escala"   << escala;
+}
+
+
+/********************************************************************************
+Carga el patrón
+*********************************************************************************/
+void camara::loadPatron(void)
+{
+	if(!existe(ruta_patron))
+		cout << "No existe archivo: " << ruta_patron << endl;
+
+	//cout << "Cargando datos de Patron... " << ruta_patron << endl;
+	FileStorage fs(ruta_patron, FileStorage::READ);
+	fs["OFFSET_X"] >> OFFSET_X;
+	fs["OFFSET_Y"] >> OFFSET_Y;
+	fs["escala"]   >> escala;
+
+}
+
+
+
+
+/************************************************
+Interficie de Audio
+************************************************/
+void* Reproduir_Audio (void*)
+{
+	char ruta_audio[70];
+	while(1)
+	{
+		//while(!parla) usleep(100000);
+		while(1) usleep(100000);
+
+		//parla=false;
+		//if(calibrado1==true) strcpy(ruta_audio, "./recursos/cal1.wav" );
+		//if(calibrado2==true) strcpy(ruta_audio, "./recursos/cal1.wav" );
+
+		sf::SoundBuffer buffer;
+		if(buffer.loadFromFile(ruta_audio))
+		{
+			sf::Sound sound;
+			sound.setBuffer(buffer);
+			sound.play();
+			sleep(5);
+		}	
+	}
+}
+
+
+/************************************************
+Detector de pendrive USB
+************************************************/
+//  Lee los archivos del directorio
+int getdir (string dir, vector<string> &files)
+{
+    DIR *dp;
+    struct dirent *dirp;
+    if((dp  = opendir(dir.c_str())) == NULL) {
+        cout << "Error(" << errno << ") opening " << dir << endl;
+        return errno;
+    }
+
+    while ((dirp = readdir(dp)) != NULL) {
+        files.push_back(string(dirp->d_name));
+    }
+    closedir(dp);
+    return 0;
+}
+
+// Consigue los hijos
+static struct udev_device*
+    get_child(struct udev* udev, struct udev_device* parent, const char* subsystem)
+{
+    struct udev_device* child = NULL;
+    struct udev_enumerate *enumerate = udev_enumerate_new(udev);
+
+    udev_enumerate_add_match_parent(enumerate, parent);
+    udev_enumerate_add_match_subsystem(enumerate, subsystem);
+    udev_enumerate_scan_devices(enumerate);
+
+    struct udev_list_entry *devices = udev_enumerate_get_list_entry(enumerate);
+    struct udev_list_entry *entry;
+
+    udev_list_entry_foreach(entry, devices)
+    {
+        const char *path = udev_list_entry_get_name(entry);
+        child = udev_device_new_from_syspath(udev, path);
+        break;
+    }
+
+    udev_enumerate_unref(enumerate);
+    return child;
+}
+
+static void enumerate_usb_mass_storage(struct udev* udev)
+{
+    struct udev_enumerate* enumerate = udev_enumerate_new(udev);
+
+    udev_enumerate_add_match_subsystem(enumerate, "scsi");
+    udev_enumerate_add_match_property(enumerate, "DEVTYPE", "scsi_device");
+    udev_enumerate_scan_devices(enumerate);
+
+    struct udev_list_entry *devices = udev_enumerate_get_list_entry(enumerate);
+    struct udev_list_entry *entry;
+
+    udev_list_entry_foreach(entry, devices)
+    {
+        const char* path = udev_list_entry_get_name(entry);
+        struct udev_device* scsi = udev_device_new_from_syspath(udev, path);
+
+        struct udev_device* block = get_child(udev, scsi, "block");
+        struct udev_device* scsi_disk = get_child(udev, scsi, "scsi_disk");
+
+        struct udev_device* usb
+            = udev_device_get_parent_with_subsystem_devtype(scsi, "usb", "usb_device");
+
+        if (block && scsi_disk && usb)
+        {
+            Num_pendrives = Num_pendrives+2;
+            string dir = string("/media");
+            vector<string> files = vector<string>();
+
+            getdir(dir,files);
+
+            for (unsigned int i = 0; i < files.size(); i++)
+                if( files[i].compare( "SETTINGS")!=0 && files[i].compare( ".")!=0 && files[i].compare( "..")!=0 )
+                    directorio_pendrive = "/media/" +  files[i] + "/" + '\0';
+
+            strcpy(DIR_PEN, "");
+            int kt = directorio_pendrive.size();
+            for(int k = 0; k < kt ; k++) DIR_PEN[k]=directorio_pendrive[k];
+            directorio_pendrive[kt]='\0';
+            //DIR_PEN[kt]='\0';
+            cout << DIR_PEN << endl;
+
+        }
+
+        if (block) {
+            udev_device_unref(block);
+        }
+
+        if (scsi_disk) {
+            udev_device_unref(scsi_disk);
+        }
+        udev_device_unref(scsi);
+    }
+    udev_enumerate_unref(enumerate);
+}
+
+void*  USB_thread ( void* )
+{
+    struct udev* udev = udev_new();
+    enumerate_usb_mass_storage(udev);
+
+    Num_pen = Num_pendrives/2;
+    cout <<  "Pendrives conectados..." << Num_pen << endl;
+    cout << directorio_pendrive << endl;
+
+    struct udev_device *dev;
+    struct udev_monitor *mon;
+    int fd;
+
+    mon = udev_monitor_new_from_netlink(udev, "udev");
+    udev_monitor_filter_add_match_subsystem_devtype(mon, "block", NULL);
+    udev_monitor_enable_receiving(mon);
+    fd = udev_monitor_get_fd(mon);
+
+    while (1)
+    {
+        fd_set fds;
+        struct timeval tv;
+        int ret;
+
+        FD_ZERO(&fds);
+        FD_SET(fd, &fds);
+        tv.tv_sec = 0;
+        tv.tv_usec = 0;
+
+        ret = select(fd+1, &fds, NULL, NULL, &tv);
+
+        // Check if our file descriptor has received data.
+        if (ret > 0 && FD_ISSET(fd, &fds))
+        {
+            dev = udev_monitor_receive_device(mon);
+            cout << endl;
+
+            if (dev)
+            {
+                // Conexion de dispositivo pendrive
+                if( strcmp(udev_device_get_action(dev),"add")==0 )
+                {
+                    Num_pendrives++;
+                    cout << "Nuevo dispositivo." << endl;
+                    string dir = string("/media");
+                    vector<string> files = vector<string>();
+
+                    //usleep(1000);
+                    getdir(dir,files);
+
+                    for (unsigned int i = 0; i < files.size(); i++)
+                        if( files[i].compare( "SETTINGS")!=0 && files[i].compare( ".")!=0 && files[i].compare( "..")!=0 )
+                            directorio_pendrive = "/media/" +  files[i] + "/" + '\0';
+
+                    strcpy(DIR_PEN, "");
+                    int kt = directorio_pendrive.size();
+                    for(int k = 0; k < kt ; k++) DIR_PEN[k]=directorio_pendrive[k];
+                    cout << DIR_PEN << endl;
+                    files.clear();
+                }
+
+                // Desconexion de dispositivo pendrive
+                if( strcmp(udev_device_get_action(dev),"remove")==0 )
+                {
+                    Num_pendrives--;
+                    cout << "Dispositivo desconectado."  << endl;
+                }
+                udev_device_unref(dev);
+            }
+            else printf("No Device from receive_device(). An error occured.\n");
+
+            Num_pen = Num_pendrives/2;
+            cout <<  "Pendrives conectados..." << Num_pen << endl;
+        }
+        usleep(250*1000);
+        fflush(stdout);
+    }
+
+    udev_unref(udev);
+    return 0;
+}
+
+
+/************************************************************************************************************
+Configuracio a partir de la conexio remota
+*************************************************************************************************************/
+int sistema_visio::Configuracio_Remota( int sock, int TAM, float temperatura, int Id, int NUM_IMAGE )
+{
+	int bytes_recieved , si = 1, i, ENVIAT, repetir =0,j=0, BYTES=1;
+
+	int ni = TAM;
+	char FI[5]="0", CONFIRMACIO[100]="";         
+           
+	char INFO[70] = "";
+
+	string tempt   = float2string(temperatura);
+	string ample1  = int2string(WIDTH_FRAME);
+	string alt1    = int2string(HEIGHT_FRAME);
+	string BY1     = int2string(BYTES);
+
+	string NOM1   = NOM_000X (NUM_IMAGE);
+	string I             = NOM_000X (ni);
+
+	string Id_Camara;
+	if(Id==1) Id_Camara = "RASP01_ ";
+	if(Id==2) Id_Camara = "RASP02_ ";
+
+	string INFO6 = Id_Camara + NOM1 + " " + ample1 + " " + alt1 + " " + BY1
+		     + " " + "0972" + " " + "1296" + " " + "0972" + " " + I 
+             + " " + int2string((int)fin_captura) + " " + int2string((int)capturando) + " " + tempt  +'\0';
+
+	int kt = INFO6.size(); 
+	for(int k = 0; k < kt ; k++) INFO[k]=INFO6[k];
+	INFO[kt]  = '\0';
+	INFO6[kt] = '\0';
+
+	mvprintw(5,0,"%s | Num caracters: %i", INFO, sizeof(INFO));
+
+		
+	// Enviar INFO del DISPOSITIU i MENSAGE
+	if(send(sock,&INFO,71,0)==-1) goto FINISH; 
+	fin_captura = false;
+	
+	// Rebre Configuracio
+	if(recv(sock,&CONFIRMACIO,99,0)==-1) goto FINISH;
+	if(!bloquejat)
+	{
+		dia =       		(int) CONFIRMACIO[0];	//ref_temp = 	(int)CONFIRMACIO[0];
+		condicion = 		(char)CONFIRMACIO[1];	//Rc = 		(int)CONFIRMACIO[1];
+		probeta = 		(int) CONFIRMACIO[2];	//Gc = 		(int)CONFIRMACIO[2];
+		NUM_CAMS = 		(int) CONFIRMACIO[3];	//Bc =		(int)CONFIRMACIO[3];
+//		fps =		(int)CONFIRMACIO[4];
+//		brightness =	(int)CONFIRMACIO[5]; 
+
+		// CONFIRMACIO[6] MODO =  8 bits: 
+		inici_remot      = (bool)((CONFIRMACIO[6] & 128)>>7);
+		G_Local          = (bool)((CONFIRMACIO[6] &  64)>>6);
+		enviar           = (bool)((CONFIRMACIO[6] &  32)>>5);
+		apagar_RPI       = (bool)((CONFIRMACIO[6] &  16)>>4);
+		abortar          = (bool)((CONFIRMACIO[6] &   8)>>3);
+
+		inicialisarCaptura();
+		sincronisacio();
+/*		if(inici_remot)
+		{
+			char generada1[100]="";
+			char generada2[100]="";
+			char ruta_completa1[150]="";
+			char ruta_completa2[150]="";
+			char raiz[50]="";
+			strcpy(raiz, DIR_PEN);
+
+			generar_carpeta (generada1, generada2, nombre, dia, condicion, probeta );
+			generar_ruta_completa (ruta_completa1, raiz, generada1);
+			generar_ruta_completa (ruta_completa2, raiz, generada2);
+
+			//if(!existe(ruta_completa1)) crear_carpeta (ruta_completa1); //if(!existe(ruta_completa1))
+			//if(!existe(ruta_completa2)) crear_carpeta (ruta_completa2); //if(!existe(ruta_completa2))
+			strcpy(nom_proyecte1, ruta_completa1);
+			strcpy(nom_proyecte2, ruta_completa2);
+
+		}*/
+		//fondo = 	(int)CONFIRMACIO[7];
+		//ACCIO = 	(int)CONFIRMACIO[8];
+
+		char S_umbral[7];
+		for(int correr=0; correr<6; correr++ ) S_umbral[correr] = CONFIRMACIO[correr+9];
+		umbral = atof(S_umbral);
+
+		char VS[7];		
+		for(int correr=0; correr<7; correr++ ) VS[correr] = CONFIRMACIO[correr+15];
+//		speed_ms = atoi(VS);  
+		for(int correr=0; CONFIRMACIO[correr+22]!='\0'; correr++)
+		{
+			nombre[correr] = CONFIRMACIO[correr+22];
+		}
+
+/*		bool nova_paraula=false;
+		int correr2=0;
+		for(int correr=0; CONFIRMACIO[correr+22]!='\0'; correr++)
+		{
+			if(CONFIRMACIO[correr+22]=='/')
+			{
+				nova_paraula=true;
+				correr2=0;
+			} 
+			if (!nova_paraula) carpeta[correr] = CONFIRMACIO[correr+22];
+			if (nova_paraula) nom_proyecte[correr2] = CONFIRMACIO[correr+23];
+			correr2++;
+        }*/
+
+	}
+
+	return 1;
+
+	FINISH:
+        	return -1; 
+
+}
+
+
+
+/************************************************
+Crear la ruta de la tabla de calibracion FUSION
+************************************************/
+void sistema_visio::crear_ruta_tablaCalibracionFusion (void)
+{
+	string conf = int2string(config); //num_camaras
+	strcat( ruta_tablaCalibracionFusion, conf.c_str() );
+
+	string sistVis = int2string(idSV);  //idSV
+	strcat( ruta_tablaCalibracionFusion, sistVis.c_str() );
+
+	strcat( ruta_tablaCalibracionFusion,".cnf");
+
+	cout  << ruta_tablaCalibracionFusion << endl;
+
+}
+
+
+/************************************************
+Crear la ruta de la tabla de calibracion FUSION
+************************************************/
+void sistema_visio::crear_ruta_idCAMARA (void)
+{
+	string conf = int2string(config); //num_camaras
+	strcat( ruta_idCAMARA, conf.c_str() );
+
+	string sistVis = int2string(idSV);  //idSV
+	strcat( ruta_idCAMARA, sistVis.c_str() );
+
+	strcat( ruta_idCAMARA,".cnf");
+
+	cout  << ruta_idCAMARA << endl;
+
+}
+
+
+/************************************************
+Crear la ruta de la tabla de calibracion FUSION
+************************************************/
+void sistema_visio::crear_ruta_tablaInterseccion (void)
+{
+	string conf = int2string(config); //num_camaras
+	strcat( ruta_tablaInterseccion, conf.c_str() );
+
+	string sistVis = int2string(idSV);  //idSV
+	strcat( ruta_tablaInterseccion, sistVis.c_str() );
+
+	strcat( ruta_tablaInterseccion,".cnf");
+
+	cout  << ruta_tablaInterseccion << endl;
+
+}
+
+
+
+/********************************************************************************
+Cargar tabla de calibración FUSION
+*********************************************************************************/
+bool sistema_visio::loadTablaFusionInversa(void)
+{
+	// cargar la tabla 
+	FILE * pFile;
+	long int lSize;
+		
+	size_t result;
+
+	if((pFile = fopen ( ruta_tablaCalibracionFusion , "rb" ))!=NULL) //dir_rep
+	{
+		cout << "Cargando Tabla Calibracion..." << ruta_tablaCalibracionFusion << endl;
+
+		if (pFile==NULL) {fputs ("File error",stderr); }
+
+		fseek (pFile , 0 , SEEK_END);
+		lSize = ftell (pFile);
+		rewind (pFile);
+
+		if (tabla_calibracionFusionInversa == NULL) {fputs ("Memory error",stderr); }
+
+		result = fread (tabla_calibracionFusionInversa, sizeof(int), lSize, pFile);
+		if (result != lSize) {fputs ("Reading error",stderr); }
+	
+	}
+	else
+	{
+		cout << "No hay archivo" << endl;
+		return false;
+	}
+	free (pFile);
+
+	cout << "Tabla cInversa cargada: " << lSize << " Bytes" << endl;
+
+
+	// Cargar la tabla idCAMARA
+	memset ( idCAMARA, 0, sizeof(char) * WIDTH_FRAME * HEIGHT_FRAME * num_camaras * 2);
+	FILE * pFile2;
+	long int lSize2;
+		
+	size_t result2;
+
+	if((pFile2 = fopen ( ruta_idCAMARA , "rb" ))!=NULL) //dir_rep
+	{
+		cout << "Cargando Tabla Calibracion..." << ruta_idCAMARA << endl;
+
+		if (pFile2==NULL) {fputs ("File error",stderr); }
+
+		fseek (pFile2 , 0 , SEEK_END);
+		lSize2 = ftell (pFile2);
+		rewind (pFile2);
+
+		if (idCAMARA == NULL) {fputs ("Memory error",stderr); }
+
+		result2 = fread (idCAMARA, sizeof(char), lSize2, pFile2);
+		if (result2 != lSize2) {fputs ("Reading error",stderr); }
+	
+	}
+	else
+	{
+		cout << "No hay archivo" << endl;
+		return false;
+	}
+	free (pFile2);
+	cout << "Tabla Inversa cargada: " << lSize2 << " Bytes" << endl;
+	CNTFusionInversa = (long int)lSize2;
+
+	return true;
+
+}
+
+
+/********************************************************************************
+Guardar tabla de calibración FUSION
+*********************************************************************************/
+bool sistema_visio::saveTablaFusionInversa (void)
+{
+	cout << "Guardando Tabla Calibracion..." << ruta_tablaCalibracionFusion << endl;
+
+	FILE *f = fopen(ruta_tablaCalibracionFusion,"w");
+
+	if (f == 0) 
+		printf("*No he pogut obrir %s\n", ruta_tablaCalibracionFusion);
+	else
+	{
+		fwrite(tabla_calibracionFusionInversa,sizeof(int),CNTFusionInversa,f);   //fwrite(image_reb,1,tam_reb,f);
+		fclose(f);
+	}
+
+
+	FILE *f2 = fopen( ruta_idCAMARA,"w");
+
+	if (f2 == 0) 
+		printf("*No he pogut obrir %s\n", ruta_idCAMARA );
+	else
+	{
+		fwrite(idCAMARA, sizeof(char), CNTFusionInversa, f2);   //fwrite(image_reb,1,tam_reb,f);
+		fclose(f2);
+	}
+
+	
+}
+
+
+/********************************************************************************
+Cargar tabla de calibración FUSION
+*********************************************************************************/
+bool sistema_visio::loadTablaInterseccion(void)
+{
+	// cargar la tabla 
+	FILE * pFile;
+	long int lSize;
+		
+	size_t result;
+
+	if((pFile = fopen ( ruta_tablaInterseccion , "rb" ))!=NULL) //dir_rep
+	{
+		cout << "Cargando Tabla Calibracion..." << ruta_tablaInterseccion << endl;
+
+		if (pFile==NULL) {fputs ("File error",stderr); }
+
+		fseek (pFile , 0 , SEEK_END);
+		lSize = ftell (pFile);
+		rewind (pFile);
+
+		if (tabla_Interseccion == NULL) {fputs ("Memory error",stderr); }
+
+		result = fread (tabla_Interseccion, sizeof(int), lSize, pFile);
+		if (result != lSize) {fputs ("Reading error",stderr); }
+	
+	}
+	else
+	{
+		cout << "No hay archivo" << endl;
+		return false;
+	}
+	free (pFile);
+
+	cout << "Tabla Intersecciones cargada: " << lSize << " Bytes" << endl;
+	cntInterseccion = lSize;
+
+	return true;
+}
+
+
+/********************************************************************************
+Guardar tabla de Intersecion
+*********************************************************************************/
+bool sistema_visio::saveTablaInterseccion (void)
+{
+	cout << "Guardando Tabla Intersección..." << ruta_tablaInterseccion << endl;
+
+	FILE *f = fopen(ruta_tablaInterseccion,"w");
+
+	if (f == 0) 
+		printf("*No he pogut obrir %s\n", ruta_tablaInterseccion);
+	else
+	{
+		fwrite( tabla_Interseccion, sizeof(int), cntInterseccion , f);
+		fclose(f);
+	}
+	
+}
+
+
+/*****************************************************************************************************************
+Clase Buffer Circular
+******************************************************************************************************************/
+bufferCircular::bufferCircular()
+{
+	idxLast= 0;
+	idxFI  = 0;
+	enCola = 0;
+	for(int it=0; it<FIFO_SIZE; it++)
+		imageBuffer[it].image = (unsigned char*) malloc ( sizeof(char*)*2592*2592 );
+}
+
+
+void bufferCircular::addImage(unsigned char* Im, char dir[], int tamany)
+{
+	strcpy(imageBuffer[idxLast].direccion, dir);
+	imageBuffer[idxLast].tamany = tamany;
+	memcpy( imageBuffer[idxLast].image, Im, tamany );
+
+	//cout << "Añadida: " << imageBuffer[idxLast].direccion <<  ", Last: " << idxLast << endl;
+
+	idxLast++;
+	if(idxLast>=FIFO_SIZE)
+		idxLast=0;
+}
+
+
+bool bufferCircular::remImage(unsigned char* Im, char *direccion, int &tam )
+{
+	checkAvail();
+	if(enCola>0)
+	{
+		//cout << "En cola: " << enCola << endl;
+		tam = imageBuffer[idxFI].tamany;
+		memcpy( Im, imageBuffer[idxFI].image, imageBuffer[idxFI].tamany );
+		strcpy( direccion, imageBuffer[idxFI].direccion );
+
+		//cout << "Quitada: " << imageBuffer[idxFI].direccion <<  ", Frst: " << idxFI << endl;
+
+		idxFI++;
+		if(idxFI>=FIFO_SIZE)
+			idxFI=0;
+
+		//checkAvail();
+		//cout << "En cola: " << enCola << endl;
+		return true;
+	}
+	return false;
+}
+
+
+void bufferCircular::reset(void)
+{
+    idxLast=  0;
+    idxFI  =  0;
+}
+
+
+int bufferCircular::checkAvail(void)
+{
+    if(idxFI>idxLast)
+        enCola=FIFO_SIZE+idxLast-idxFI;
+    else if (idxFI<=idxLast)
+        enCola=idxLast-idxFI;
+
+    if(enCola<0)
+        enCola=0;
+
+    return enCola;
+}
+
+
+/*
+* Cuenta las veces que ha arrancado la RASPBERRY PI
+*/
+int contadorCiclos( void )
+{
+	int CICLES;
+	if(!existe("./analisis/cicles.xml")){
+		FileStorage fs("./analisis/cicles.xml", FileStorage::WRITE);
+		fs << "CICLES" << 0;
+	}
+	{
+		FileStorage fs( "./analisis/cicles.xml", FileStorage::READ); 
+		fs["CICLES"] >> CICLES;
+		CICLES++;
+	}
+	{
+		FileStorage fs("./analisis/cicles.xml", FileStorage::WRITE);
+		fs << "CICLES" << CICLES;
+	}
+
+	return CICLES;
+}
+

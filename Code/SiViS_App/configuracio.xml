@@ -1,0 +1,17 @@
+<?xml version="1.0"?>
+<opencv_storage>
+<esMaster>0</esMaster>
+<withMUX>1</withMUX>
+<IP_Servidor>"192.168.1.102"</IP_Servidor>
+<IP_Master>"192.168.1.3"</IP_Master>
+<IP_SV_Ppal>"192.168.1.2"</IP_SV_Ppal>
+<id_Raspberry>1</id_Raspberry>
+<id_Sistema_visio>1</id_Sistema_visio>
+<SistemaVisio_Ppal>1</SistemaVisio_Ppal>
+<Cantitat_Sistemes_Visio>2</Cantitat_Sistemes_Visio>
+<Cantitat_Camares>1</Cantitat_Camares>
+<idCam_Ppal>1</idCam_Ppal>
+<WIDTH_FRAME>1944</WIDTH_FRAME>
+<HEIGHT_FRAME>1944</HEIGHT_FRAME>
+<config>1</config>
+</opencv_storage>
