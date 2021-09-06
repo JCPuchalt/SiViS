@@ -28,7 +28,7 @@ In this repository are the .stl files to print in 3D printer.
 * electronicBox.stl
 * displayBox.stl
 * frame.stl
-* Bolt
+* bolt.stl
 
 Then assemby vibration system and adjust to vision system as follow 
 https://github.com/JCPuchalt/SiViS/blob/master/AssemblyManual.pdf
